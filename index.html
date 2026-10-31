@@ -82,6 +82,8 @@ button{font:inherit}
 .sq .dot{position:absolute;left:50%;top:50%;width:26%;height:26%;margin:-13% 0 0 -13%;border-radius:50%;background:rgba(40,25,10,.4);box-shadow:0 0 0 2px rgba(246,221,143,.5);z-index:1}
 .sq .ring{position:absolute;inset:6%;border-radius:50%;border:4px solid rgba(220,70,50,.7);z-index:1}
 .pcs{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+.pc .g{pointer-events:auto;cursor:pointer}
+.pc.gone .g{pointer-events:none}
 .pc{position:absolute;width:12.5%;height:12.5%;transform-style:preserve-3d;transition:left .6s cubic-bezier(.5,0,.3,1),top .6s cubic-bezier(.5,0,.3,1)}
 .pc::before{content:"";position:absolute;left:18%;right:18%;bottom:10%;height:16%;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(3px)}
 .up{position:absolute;left:0;right:0;bottom:12%;height:120%;display:flex;align-items:flex-end;justify-content:center;transform:rotateX(-24deg);transform-origin:50% 100%}
@@ -102,17 +104,25 @@ button{font:inherit}
 .flash{position:absolute;width:12.5%;height:12.5%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,240,200,.95),rgba(255,180,90,.4) 40%,transparent 70%)}
 .dust{position:absolute;width:12.5%;height:12.5%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(220,210,190,.55),transparent 65%)}
 .shake{animation:shake .45s}
-@keyframes shake{0%,100%{transform:rotateX(24deg) translate(0)}20%{transform:rotateX(24deg) translate(-7px,3px)}40%{transform:rotateX(24deg) translate(6px,-4px)}60%{transform:rotateX(24deg) translate(-4px,2px)}80%{transform:rotateX(24deg) translate(3px,-1px)}}
+@keyframes shake{0%,100%{transform:rotateX(24deg) translate(0)}20%{transform:rotateX(24deg) translate(calc(-7px*var(--sh,1)),calc(3px*var(--sh,1)))}40%{transform:rotateX(24deg) translate(calc(6px*var(--sh,1)),calc(-4px*var(--sh,1)))}60%{transform:rotateX(24deg) translate(calc(-4px*var(--sh,1)),calc(2px*var(--sh,1)))}80%{transform:rotateX(24deg) translate(calc(3px*var(--sh,1)),calc(-1px*var(--sh,1)))}}
+.weapon{position:absolute;z-index:40;width:10%;pointer-events:none;transform-origin:50% 92%;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
+.weapon svg{width:100%;height:auto;display:block}
+.w-b{width:13%}.w-r{width:12.5%}.w-q{width:6%}.w-k{width:8.5%;transform-origin:50% 50%}
+.spark{position:absolute;z-index:41;width:7px;height:7px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fffbe0,#f6dd8f 50%,rgba(246,221,143,0));box-shadow:0 0 8px #f6dd8f}
+.pc.rear .up{animation:rear .52s cubic-bezier(.4,0,.3,1)}
+@keyframes rear{0%{transform:rotateX(-24deg) rotate(0) translateY(0)}45%{transform:rotateX(-24deg) rotate(-22deg) translateY(-30%)}75%{transform:rotateX(-24deg) rotate(8deg) translateY(4%)}100%{transform:rotateX(-24deg) rotate(0) translateY(0)}}
 .beam{position:fixed;z-index:90;height:14px;transform-origin:0 50%;pointer-events:none;border-radius:7px;
  background:linear-gradient(90deg,rgba(120,255,140,0),#7dff8a 12%,#e9ffe9 50%,#7dff8a 88%,rgba(120,255,140,.2));
  box-shadow:0 0 18px 6px rgba(60,255,90,.85),0 0 60px 20px rgba(40,220,70,.5)}
 .greenfx{position:fixed;inset:0;z-index:89;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(140,255,150,.9),rgba(20,180,50,.55) 45%,rgba(0,40,10,.2))}
 .slab{position:absolute;pointer-events:none}
-.bub{position:absolute;z-index:50;transform:translate(-50%,-100%) rotateX(-24deg) translateZ(120px);transform-origin:50% 100%;white-space:nowrap;
+.bub{position:absolute;z-index:50;transform:translate(-50%,-100%) rotateX(-24deg) translateZ(120px);transform-origin:50% 100%;white-space:pre-line;width:max-content;max-width:230px;text-align:center;line-height:1.45;
  padding:6px 11px;font-size:13px;font-weight:600;color:#2a1d0c;border-radius:10px;background:linear-gradient(#fbf3df,#ead9b2);border:1px solid #b8913f;
  box-shadow:0 6px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .25s,margin .25s;margin-top:6px;pointer-events:none}
 .bub::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#ead9b2;border-bottom:0}
 .bub.on{opacity:1;margin-top:0}
+.bub .horse{display:block;margin-top:3px;font-size:12px;font-weight:600;font-style:italic;color:#8a5a1c}
+.bub.dark .horse{color:#e0b878}
 .bub.dark{color:#f1e6cc;background:linear-gradient(#2b2d33,#16171b);border-color:#6b6f78}.bub.dark::after{border-top-color:#16171b}
 
 /* ---------- side ---------- */
@@ -162,6 +172,7 @@ button{font:inherit}
 .ov{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;
  background:radial-gradient(60% 50% at 50% 45%,rgba(40,30,18,.94),rgba(5,4,3,.97));transition:opacity .4s}
 .ov.hide{opacity:0;pointer-events:none}
+.ov.hide *{pointer-events:none!important}
 .ov h2{margin:0;font-family:Cinzel,serif;font-size:13px;letter-spacing:.5em;color:#a88a50;font-weight:700}
 .panel{width:100%;max-width:420px;padding:22px;background:linear-gradient(#17120c,#0e0b08);border:1px solid var(--gd);box-shadow:inset 0 0 0 4px #0b0907,inset 0 0 0 5px rgba(216,178,90,.35)}
 .fld{margin-bottom:12px}.fld label{display:block;font-size:11.5px;color:var(--mut);margin-bottom:4px;letter-spacing:.08em}
@@ -454,6 +465,39 @@ const PIECE={
  check:['왕이여, 항복하라!','체크!','도망칠 곳은 없다!'],
  promote:['보아라, 여왕의 귀환이다!','드디어 이 순간이!'],
  castle:['폐하, 이쪽으로!','성벽을 세워라!']};
+// each piece type has its own voice (lines with " / " are the knight and his horse talking)
+const PL={
+ p:{promote:['어? 저 이제 폰 아니에요?','야근 끝에 승진이라니!'],
+    order:['지금 저보고 싸우라구요? 쟤랑요?','네, 네… 앞으로 한 칸이요.','왜 맨날 저만 앞에 세워요…','알겠어요, 간다고요, 가요.'],
+    grumble:['저 거기 가면 죽는데요?','진심이세요? 저 폰이에요, 폰.','유서 써놓고 갈게요…'],
+    strike:['어? 이겼다?!','저도 할 줄 안다고요!','폰을 무시하지 마시죠!'],
+    victim:['그럴 줄 알았어…','월급도 안 주면서…','역시 나만…!']},
+ b:{promote:['드디어 제 말을 들어줄 차례군요! 우선 첫째로—','승진 소감을 말씀드리자면, 일단 서론부터—'],
+    order:['대각선이죠? 제 전문이죠, 그러니까 이 각도가—','가면서 설명드릴게요, 우선 이 수의 의미는—','예예, 그런데 아까 그 수 말인데요—'],
+    grumble:['잠깐만요, 이건 논리적으로 문제가 세 가지—','제가 반대 의견을 몇 가지 말씀드리자면—'],
+    strike:['의자 맛 좀 보시죠! 설교는 이따가!','자, 그러니까 이게 바로 제가 말한—','보세요, 제 말이 맞았죠?'],
+    victim:['아직 할 말이 남았는데—!','요점만 말하자면… 으악!']},
+ r:{castle:['……(성문을 닫는다)','…폐하는 제가 지킵니다.','……'],promote:['……(갑옷을 두른다)','…성벽이 되겠습니다.'],
+    order:['……','…알겠습니다.','…….(끄덕)'],
+    grumble:['……(한숨)','…명령이라면.'],
+    strike:['……','…끝.','…….'],
+    victim:['…….','…영광이었습니다.']},
+ q:{promote:['폰이었던 시절은 잊어주세요. 이제 여왕이에요.','드레스는 미리 준비해 뒀답니다.'],
+    order:['후훗, 내가 직접 나서야겠군요.','드레스에 먼지가 묻지 않게 하죠.','우아하게 끝내드리죠.'],
+    grumble:['…그대의 판단을 믿어보겠어요.','이건 품위 없는 수로군요.'],
+    strike:['실례했어요.','무릎 꿇으세요.','우아함에도 힘이 있답니다.'],
+    victim:['이런… 무례하군요.','품위 있게 퇴장하죠.']},
+ n:{order:['돌격이다!|히힝 (또 기역 자로?)','가자, 친구!|히힝 (뛰는 건 나거든?)','내 창을 받아라!|히힝 (창은 무슨, 밟는 건 나야)'],
+    grumble:['거기로…?|히이잉 (난 안 가)','주인의 판단을 믿…|히힝 (믿지 마)'],
+    strike:['보았느냐!|히힝 (밟은 건 나라고)','기사도의 승리다!|히힝 (말발굽의 승리겠지)'],
+    victim:['말에서 떨어졌다…!|히힝 (나 먼저 간다)','내 말을 부탁…|히힝 (나 여기 있어!)'],
+    promote:['말이 생겼다!|히힝 (태워줄지는 모르겠는데?)']},
+ k:{castle:['성, 성 안으로! 어서 짐을 숨겨라!','문을 닫아라! 빨리!','휴… 여기라면 안전하겠지?'],
+    order:['나, 나 말이냐? 꼭 가야 하느냐?','조심조심… 한 칸만이다.','누가 좀 앞에 서 주거라!'],
+    grumble:['거긴 위험하지 않느냐?!','싫다! 짐은 싫다!'],
+    strike:['어, 어라? 내가 이겼느냐?','짐의… 주먹 맛을… 봤느냐…?'],
+    checked:['사, 살려다오!','누가 짐을 좀 지켜라!','짐은 아직 죽고 싶지 않다!']}};
+const pline=(p,sit)=>{const set=PL[p.toLowerCase()];const a=(set&&set[sit])||PIECE[sit]||[];return a.length?pickOne(a):''};
 const KN={p:'폰',n:'기사',b:'비숍',r:'룩',q:'여왕',k:'왕'};
 const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
 const EMO_KO={calm:'평온',good:'유리',bad:'불리',win:'승리',lose:'패배'};
@@ -470,7 +514,7 @@ const pickOne=a=>a[Math.floor(Math.random()*a.length)];
    SOUND: original music + effects synthesized with WebAudio.
    Put your own track at audio/bgm.mp3 to use it instead of the built-in tune.
    ===================================================================== */
-const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0,fileBgm=null,cur=0,token=0,initAt=0;
+const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0,fileBgm=null,cur=0,token=0,initAt=0,strBus,lowBus,loop=0,evIdx=null;
  const pref={bgm:1,sfx:true};try{const sv=JSON.parse(localStorage.getItem('wc_sound')||'{}');Object.assign(pref,sv);if(pref.bgm===true)pref.bgm=1;if(pref.bgm===false)pref.bgm=0}catch(e){}
  const save=()=>{try{localStorage.setItem('wc_sound',JSON.stringify(pref))}catch(e){}};
  function init(){if(ctx){if(ctx.state==='suspended')ctx.resume();return}
@@ -478,8 +522,10 @@ const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0
   master=ctx.createGain();master.gain.value=.9;master.connect(ctx.destination);
   sfxG=ctx.createGain();sfxG.gain.value=pref.sfx?.8:0;sfxG.connect(master);
   bgmG=ctx.createGain();bgmG.gain.value=.32;bgmG.connect(master);
+  strBus=ctx.createBiquadFilter();strBus.type='lowpass';strBus.frequency.value=3200;strBus.Q.value=.5;strBus.connect(bgmG);
+  lowBus=ctx.createBiquadFilter();lowBus.type='lowpass';lowBus.frequency.value=700;lowBus.connect(bgmG);
   noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-  if(pref.bgm)play(pref.bgm)}
+  loadFiles();if(pref.bgm)play(pref.bgm)}
  const T=()=>ctx.currentTime;
  function tone(f,type,t,dur,vol,dest,att=.005,f2){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
   if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);
@@ -502,40 +548,86 @@ const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0
   avada(){if(!ok())return;const t=T();noise(t,.5,.5,'bandpass',300,2,4000);tone(1200,'sawtooth',t+.35,.5,.18,null,.005,90);
    noise(t+.45,1.2,.8,'lowpass',2000,.7,120);tone(55,'sine',t+.45,1.2,.8)},
   win(){if(!ok())return;const t=T();[523,659,784,1047].forEach((f,i)=>{tone(f,'triangle',t+i*.13,.7,.18);tone(f*2,'sine',t+i*.13,.5,.05)})},
-  lose(){if(!ok())return;const t=T();[392,349,311,262].forEach((f,i)=>tone(f,'triangle',t+i*.22,.9,.16))}};
- // ---- three built-in tunes (original compositions). audio/bgm1.mp3 ~ bgm3.mp3 replace them if present.
+  lose(){if(!ok())return;const t=T();[392,349,311,262].forEach((f,i)=>tone(f,'triangle',t+i*.22,.9,.16))},
+  // per-piece attacks
+  pawn(){if(!ok())return;const t=T();noise(t,.18,.35,'bandpass',900,1.5,3500);[1800,2710,4130].forEach((f,i)=>tone(f,'sine',t+.17,.45-i*.08,.16-i*.04));noise(t+.17,.03,.4,'highpass',5000,1)},
+  bishop(){if(!ok())return;const t=T();noise(t,.22,.3,'bandpass',500,1.2,1600);noise(t+.24,.12,.7,'bandpass',650,2);tone(190,'triangle',t+.24,.16,.45,null,.003,90);noise(t+.28,.05,.35,'bandpass',1600,6);noise(t+.33,.04,.25,'bandpass',1300,6)},
+  rook(){if(!ok())return;const t=T();noise(t,.34,.35,'lowpass',250,1,1000);tone(62,'sine',t+.34,.6,.9,null,.004,40);noise(t+.34,.35,.6,'lowpass',900,1);[680,1020,1530].forEach((f,i)=>tone(f,'sine',t+.34,.3,.08))},
+  queen(){if(!ok())return;const t=T();noise(t,.16,.25,'highpass',2500,1,6000);noise(t+.2,.03,.6,'bandpass',2200,3);tone(900,'square',t+.2,.05,.08);[1568,2093,2637,3136].forEach((f,i)=>tone(f,'sine',t+.24+i*.05,.4,.07))},
+  king(){if(!ok())return;const t=T();noise(t,.12,.18,'bandpass',700,1,1400);tone(140,'sine',t+.12,.1,.3,null,.003,100);noise(t+.12,.05,.2,'lowpass',500,1)},
+  knight(){if(!ok())return;const t=T(),o=ctx.createOscillator(),lfo=ctx.createOscillator(),lg=ctx.createGain(),f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),g=ctx.createGain();
+   // a whinny: rising cry, then a fast wobbling fall
+   o.type='sawtooth';o.frequency.setValueAtTime(420,t);o.frequency.linearRampToValueAtTime(980,t+.12);o.frequency.linearRampToValueAtTime(820,t+.35);o.frequency.exponentialRampToValueAtTime(320,t+.85);
+   lfo.frequency.setValueAtTime(9,t);lfo.frequency.linearRampToValueAtTime(14,t+.8);lg.gain.setValueAtTime(30,t);lg.gain.linearRampToValueAtTime(90,t+.8);lfo.connect(lg);lg.connect(o.frequency);
+   f1.type='bandpass';f1.frequency.value=1300;f1.Q.value=3;f2.type='bandpass';f2.frequency.value=2600;f2.Q.value=4;
+   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32,t+.05);g.gain.setValueAtTime(.3,t+.6);g.gain.exponentialRampToValueAtTime(.001,t+.9);
+   o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(sfxG);o.start(t);lfo.start(t);o.stop(t+.95);lfo.stop(t+.95);
+   tone(48,'sine',t+.5,.5,.9,null,.003,35);noise(t+.5,.3,.6,'lowpass',500,1)}};
+ // any effect can be replaced by a file: audio/sfx_<name>.mp3
+ const files={};
+ function loadFiles(){for(const n of Object.keys(fx)){const a=new Audio('audio/sfx_'+n+'.mp3');a.preload='auto';
+   a.addEventListener('canplaythrough',()=>{files[n]=a},{once:true});a.load()}}
+ for(const n of Object.keys(fx)){const synth=fx[n];fx[n]=()=>{if(!ok())return;const f=files[n];
+   if(f){const c=f.cloneNode();c.volume=.8;c.play().catch(()=>{})}else synth()}}
+ // ---- three classical pieces (all public domain), arranged and played by the synth below.
+ //      audio/bgm1.mp3 ~ bgm3.mp3 replace them if present.
  const N=n=>440*Math.pow(2,(n-69)/12);
- const TRACKS={
-  1:{name:'오르골 왈츠',bpm:66,spb:6,style:'box',
-   ch:[[50,53,57,62],[46,50,53,58],[43,46,50,55],[45,49,52,57],[50,53,57,62],[48,52,55,60],[46,50,53,58],[45,49,52,57]],
-   mel:[[69,74,77],[77,74,70],[70,74,79],[76,73,69],[74,77,81],[79,76,72],[74,70,77],[76,73,null],
-        [74,76,77],[77,74,70],[67,70,74],[73,76,79],[81,77,74],[76,72,79],[77,74,70],[69,73,76]]},
-  2:{name:'대연회장',bpm:84,spb:8,style:'lute',
-   ch:[[53,57,60,65],[48,52,55,60],[50,53,57,62],[46,50,53,58],[53,57,60,65],[48,52,55,60],[46,50,53,58],[48,52,55,60]],
-   mel:[[72,77,76,72],[76,74,72,67],[69,72,74,77],[74,72,70,null],[72,77,81,79],[79,76,72,76],[74,77,74,70],[72,67,72,null]]},
-  3:{name:'결투',bpm:112,spb:8,style:'duel',
-   ch:[[45,48,52,57],[41,45,48,53],[43,47,50,55],[40,44,47,52],[45,48,52,57],[38,41,45,50],[40,44,47,52],[40,44,47,52]],
-   mel:[[76,null,76,77],[76,74,72,null],[74,null,74,76],[71,68,64,null],[81,79,77,76],[77,74,69,null],[68,71,74,76],[76,null,null,null]]}};
- function voice(tr,t,pos,ch,mel,E){
-  if(tr.style==='box'){
-   if(pos===0){tone(N(ch[0]-12),'sine',t,E*6,.2,bgmG,.04);for(const n of ch.slice(1))tone(N(n),'triangle',t,E*6,.03,bgmG,.6)}
-   tone(N(ch[[1,2,3,2,1,2][pos]]+12),'sine',t,E*1.6,.035,bgmG,.005);
-   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'sine',t,E*4,.08,bgmG,.004);tone(N(m)*2,'sine',t,E*1.5,.024,bgmG,.004);tone(N(m)*3,'sine',t,E*.6,.008,bgmG,.004)}}}
-  else if(tr.style==='lute'){
-   if(pos===0||pos===4){tone(N(ch[0]-12),'triangle',t,E*3.5,.18,bgmG,.01)}
-   if(pos===0)for(const n of ch.slice(1))tone(N(n),'sine',t,E*8,.025,bgmG,.8);
-   const a=N(ch[[1,2,3,2,1,2,3,2][pos]]);tone(a,'triangle',t,E*1.4,.05,bgmG,.003);noise(t,.03,.03,'bandpass',a*3,4,null,bgmG);
-   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'triangle',t,E*2.6,.085,bgmG,.006);tone(N(m)*2,'sine',t,E*1,.02,bgmG,.006)}}}
-  else{ // duel: driving pulse, timpani, staccato lead
-   tone(N(ch[0]-12),'sawtooth',t,E*.7,.05,bgmG,.004);tone(N(ch[0]-24),'sine',t,E*.8,.12,bgmG,.004);
-   if(pos===0||pos===6){tone(70,'sine',t,.45,.35,bgmG,.003,45);noise(t,.15,.12,'lowpass',400,1,null,bgmG)}
-   if(pos===0)for(const n of ch.slice(1))tone(N(n),'triangle',t,E*8,.03,bgmG,.3);
-   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'triangle',t,E*1.2,.09,bgmG,.004);tone(N(m)*2,'square',t,E*.5,.012,bgmG,.004)}}}}
- function schedule(){const tr=TRACKS[cur];if(!tr)return;const E=60/tr.bpm/2;
-  while(nextT<ctx.currentTime+.4){const bi=Math.floor(step/tr.spb),pos=step%tr.spb;
-   voice(tr,nextT,pos,tr.ch[bi%tr.ch.length],tr.mel[bi%tr.mel.length],E);nextT+=E;step++}}
+ // event = [step, midi, length(steps), voice, volume]  (1 step = a sixteenth note)
+ function seqVivaldi(){const ev=[],G=55,s=(st,n,l,v,g)=>ev.push([st,n,l,v,g]);let t=0;
+  const trem=(n,bars,b)=>{for(let i=0;i<16*bars;i++){s(t,n,1,'str',.05);s(t,n-12,1,'str',.035);if(i%4===0)s(t,b,4,'low',.12);t++}};
+  const run=(notes,b)=>{notes.forEach((n,i)=>{s(t,n,1,'lead',.06);if(i%4===0)s(t,b,4,'low',.12);t++})};
+  const down=[79,77,75,74,72,70,69,67,66,67,69,70,72,74,75,77];          // G5 down and back up
+  const fall=[79,78,79,74,75,74,70,72,70,67,69,67,62,63,62,55];           // stormy falling figure
+  trem(67,2,43);run(down,43);run(fall,38);
+  trem(70,1,46);trem(69,1,38);run([74,72,70,69,67,66,64,62,74,72,70,69,67,66,64,62],38);
+  trem(67,2,43);run(down,43);run(fall,38);
+  // arpeggios G minor - C minor - D7 - G minor
+  [[55,58,62,67],[55,60,63,67],[54,57,62,66],[55,58,62,67]].forEach((c,k)=>{for(let r=0;r<4;r++)c.concat([...c].reverse()).forEach((n,i)=>{s(t,n+12,1,'lead',.055);if(i%4===0)s(t,c[0]-12,4,'low',.12);t++})});
+  return {ev,len:t,bpm:132}}
+ function seqPaganini(){const ev=[],s=(st,n,l,v,g)=>ev.push([st,n,l,v,g]);let t=0;
+  // Caprice No.24 theme (2/4): eighth = 2 steps, sixteenth = 1 step; bass on each beat
+  const bar=(mel,bass,oct)=>{let k=0;for(const [n,l] of mel){if(n)s(t+k,n+(oct||0),l,'lead',.075);k+=l}
+   s(t,bass,2,'pizz',.16);s(t+4,bass+7,2,'pizz',.12);t+=8};
+  const A=[[69,2],[69,1],[72,1],[71,1],[69,1],[0,2]],Ed=[[76,2],[0,2],[64,2],[0,2]];
+  const half1=o=>{bar(A,45,o);bar(Ed,40,o);bar(A,45,o);bar(Ed,40,o);bar(A,45,o);bar(Ed,40,o);
+   bar([[76,2],[76,1],[80,1],[78,1],[76,1],[0,2]],40,o);bar([[81,4],[69,2],[0,2]],45,o)};
+  const half2=o=>{bar([[72,2],[72,1],[76,1],[74,1],[72,1],[0,2]],48,o);bar([[79,2],[0,2],[67,2],[0,2]],43,o);
+   bar([[71,2],[71,1],[74,1],[72,1],[71,1],[0,2]],43,o);bar([[76,2],[0,2],[64,2],[0,2]],40,o);
+   bar(A,45,o);bar([[74,2],[0,2],[62,2],[0,2]],38,o);bar([[76,2],[76,1],[80,1],[78,1],[76,1],[0,2]],40,o);bar([[81,4],[0,4]],45,o)};
+  half1(0);half1(0);half2(0);half2(0);
+  // variation: the theme in running sixteenths an octave higher
+  const run=(c,b)=>{c.concat(c).forEach((n,i)=>s(t+i,n,1,'lead',.06));s(t,b,2,'pizz',.16);s(t+4,b+7,2,'pizz',.12);t+=8};
+  for(let r=0;r<3;r++){run([81,84,83,81],45);run([88,83,80,76],40)}
+  run([88,92,90,88],40);run([93,88,84,81],45);
+  return {ev,len:t,bpm:96}}
+ function seqGrieg(){const ev=[],s=(st,n,l,v,g)=>ev.push([st,n,l,v,g]);let t=0;
+  // In the Hall of the Mountain King: eighth = 2 steps; it speeds up every time it repeats
+  const ph=(notes,base)=>{for(const [n,l] of notes){s(t,n,l,'lead',.07);s(t,n-12,l,'low',.09);t+=l}};
+  const pz=(from,bars,root)=>{for(let i=0;i<bars*4;i++)s(from+i*4,root-12,2,'pizz',.15)};
+  const P1=[[59,2],[61,2],[62,2],[64,2],[66,2],[62,2],[66,4],[65,2],[61,2],[65,4],[64,2],[60,2],[64,4],
+            [59,2],[61,2],[62,2],[64,2],[66,2],[62,2],[66,2],[71,2],[69,2],[66,2],[62,2],[66,2],[69,8]];
+  const P2=P1.map(([n,l])=>[n+7,l]);
+  let st=t;ph(P1);pz(st,4,47);st=t;ph(P1);pz(st,4,47);st=t;ph(P2);pz(st,4,54);st=t;ph(P2);pz(st,4,54);
+  return {ev,len:t,bpm:96,accel:true}}
+ const TRACKS={1:{name:'여름 · 비발디',make:seqVivaldi},2:{name:'카프리스 24번 · 파가니니',make:seqPaganini},3:{name:'산왕의 전당 · 그리그',make:seqGrieg}};
+ function voice(v,f,t,d,g){
+  if(v==='lead'){const o1=ctx.createOscillator(),o2=ctx.createOscillator(),lfo=ctx.createOscillator(),lg=ctx.createGain(),e=ctx.createGain();
+   o1.type='sawtooth';o2.type='sawtooth';o1.frequency.value=f;o2.frequency.value=f*1.004;lfo.frequency.value=5.6;lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(f*.006,t+Math.min(.25,d));
+   lfo.connect(lg);lg.connect(o1.frequency);lg.connect(o2.frequency);
+   e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.012);e.gain.setValueAtTime(g*.85,t+Math.max(.02,d*.8));e.gain.exponentialRampToValueAtTime(.0005,t+d+.06);
+   o1.connect(e);o2.connect(e);e.connect(strBus);for(const o of [o1,o2,lfo]){o.start(t);o.stop(t+d+.1)}}
+  else if(v==='str'){tone(f,'sawtooth',t,d+.03,g,strBus,.006)}
+  else if(v==='low'){tone(f,'sawtooth',t,d,g,lowBus,.01)}
+  else if(v==='pizz'){tone(f,'triangle',t,.22,g,bgmG,.003);tone(f*2,'sine',t,.1,g*.3,bgmG,.003)}}
+ let curSeq=null,curBpm=96;
+ function schedule(){if(!curSeq)return;
+  while(nextT<ctx.currentTime+.35){const E=60/curBpm/4,evs=evIdx[step];
+   if(evs)for(const [st,n,l,v,g] of evs)voice(v,N(n),nextT,l*E*.95,g);
+   nextT+=E;step++;
+   if(step>=curSeq.len){step=0;loop++;if(curSeq.accel)curBpm=loop%4===0?curSeq.bpm:curBpm*1.18}}}
  function stopAll(){if(timer){clearInterval(timer);timer=null}if(fileBgm){fileBgm.pause();fileBgm=null}}
- function startSynth(n){cur=n;step=0;nextT=ctx.currentTime+.15;timer=setInterval(schedule,100)}
+ function startSynth(n){cur=n;curSeq=TRACKS[n].make();curBpm=curSeq.bpm;loop=0;evIdx=[];for(const e of curSeq.ev)(evIdx[e[0]]=evIdx[e[0]]||[]).push(e);
+  step=0;nextT=ctx.currentTime+.15;timer=setInterval(schedule,90)}
  function play(n){stopAll();cur=n;if(!ctx||!n)return;const my=++token;
   const a=new Audio('audio/bgm'+n+'.mp3');a.loop=true;a.volume=.45;
   a.addEventListener('canplaythrough',()=>{if(my!==token)return;fileBgm=a;a.play().catch(()=>{})},{once:true});
@@ -606,11 +698,21 @@ async function setEmotion(e,force){if(e===emotion&&!force)return;emotion=e;
 function vpos(sq){const f=sq&7,r=sq>>3,col=flipped()?7-f:f,row=flipped()?r:7-r;return {x:col*12.5,y:row*12.5}}
 function buildBoard(){const bd=$('board');bd.querySelectorAll('.sq').forEach(x=>x.remove());
  for(let sq=0;sq<64;sq++){const d=document.createElement('div'),p=vpos(sq);d.className='sq '+(((sq&7)+(sq>>3))%2?'l':'d');d.dataset.sq=sq;
-  d.style.left=p.x+'%';d.style.top=p.y+'%';d.onclick=()=>onSquare(sq);bd.insertBefore(d,$('pcs'))}
+  d.style.left=p.x+'%';d.style.top=p.y+'%';bd.insertBefore(d,$('pcs'))}
  $('crdF').innerHTML=[...'abcdefgh'].map((c,i)=>'<span>'+(flipped()?'hgfedcba'[i]:c).toUpperCase()+'</span>').join('');
  $('crdR').innerHTML=[8,7,6,5,4,3,2,1].map(n=>'<span>'+(flipped()?9-n:n)+'</span>').join('')}
 function glyphEl(p){const d=document.createElement('div');d.className='pc '+Chess.colorOf(p);
  d.innerHTML='<div class="up"><span class="g">'+GLYPH[p.toLowerCase()]+'︎</span></div>';return d}
+// one tap handler for the whole board: a standing piece covers part of the square behind it,
+// so a tap can mean "that piece" or "the square under my finger" - prefer a legal target square
+$('board').addEventListener('click',e=>{
+ const pts=document.elementsFromPoint(e.clientX,e.clientY),sqE=pts.find(x=>x.classList&&x.classList.contains('sq')),
+  pcE=pts.map(x=>x.closest&&x.closest('.pc')).find(Boolean),under=sqE?+sqE.dataset.sq:-1,
+  pcSq=pcE?+((Object.entries(pieceAt).find(([k,v])=>v===pcE)||[-1])[0]):-1;
+ if(selected>=0&&under>=0&&legalNow.some(m=>m.from===selected&&m.to===under))return onSquare(under);
+ if(selected>=0&&pcSq>=0&&legalNow.some(m=>m.from===selected&&m.to===pcSq))return onSquare(pcSq);
+ if(under>=0&&S.b[under]&&Chess.colorOf(S.b[under])===userColor)return onSquare(under);
+ if(pcSq>=0)return onSquare(pcSq);if(under>=0)onSquare(under)});
 function placePieces(){const pcs=$('pcs');pcs.innerHTML='';pieceAt={};
  for(let sq=0;sq<64;sq++){const p=S.b[sq];if(!p)continue;const e=glyphEl(p),q=vpos(sq);e.style.left=q.x+'%';e.style.top=q.y+'%';pcs.appendChild(e);pieceAt[sq]=e}}
 const sqEl=sq=>document.querySelector('.sq[data-sq="'+sq+'"]');
@@ -618,10 +720,10 @@ function clearMarks(){document.querySelectorAll('.sq').forEach(s=>{s.classList.r
 function markLast(){document.querySelectorAll('.sq.last,.sq.chk').forEach(s=>s.classList.remove('last','chk'));
  if(lastMove){sqEl(lastMove.from).classList.add('last');sqEl(lastMove.to).classList.add('last')}
  if(Chess.inCheck(S)){const k=S.b.indexOf(S.turn==='w'?'K':'k');sqEl(k).classList.add('chk')}}
-function bubble(sq,text,dark,ms){const q=vpos(sq),b=document.createElement('div');b.className='bub'+(dark?' dark':'');b.textContent=text;
+function bubble(sq,text,dark,ms){const q=vpos(sq),b=document.createElement('div');b.className='bub'+(dark?' dark':'');if(text.includes('|')){const [a,h]=text.split('|');b.textContent=a;const hs=document.createElement('span');hs.className='horse';hs.textContent=h;b.appendChild(hs)}else b.textContent=text;
  b.style.left=(q.x+6.25)+'%';b.style.top=(q.y-9)+'%';$('pcs').appendChild(b);requestAnimationFrame(()=>b.classList.add('on'));
  setTimeout(()=>{b.classList.remove('on');setTimeout(()=>b.remove(),300)},ms||1400)}
-function shatter(sq,dark){const q=vpos(sq),pcs=$('pcs'),cols=dark?['#5a616c','#2b2f36','#16181c','#8a929e']:['#fffaf0','#e6dcc6','#bfb294','#9c8f74'];
+function shatter(sq,dark,power){power=power||1;const q=vpos(sq),pcs=$('pcs'),cols=dark?['#5a616c','#2b2f36','#16181c','#8a929e']:['#fffaf0','#e6dcc6','#bfb294','#9c8f74'];
  for(let i=0;i<30;i++){const s=document.createElement('div');s.className='shard';const w=6+Math.random()*14,h=6+Math.random()*16;
   s.style.cssText=`left:${q.x+6.25}%;top:${q.y+5}%;width:${w}px;height:${h}px;background:${cols[i%4]};clip-path:polygon(${Math.random()*40}% 0,100% ${Math.random()*50}%,${60+Math.random()*40}% 100%,0 ${50+Math.random()*50}%)`;
   pcs.appendChild(s);const a=Math.random()*Math.PI*2,d=40+Math.random()*90;
@@ -629,25 +731,48 @@ function shatter(sq,dark){const q=vpos(sq),pcs=$('pcs'),cols=dark?['#5a616c','#2
    {transform:`translate(${Math.cos(a)*d*1.3}px,${Math.sin(a)*d*.6+10}px) rotate(${Math.random()*720-360}deg)`,opacity:0}],{duration:1000+Math.random()*400,easing:'cubic-bezier(.2,.6,.4,1)',fill:'forwards'}).onfinish=()=>s.remove()}
  for(const [cls,dur,sc] of [['flash',420,2.2],['dust',900,2.6]]){const e=document.createElement('div');e.className=cls;e.style.left=q.x+'%';e.style.top=q.y+'%';pcs.appendChild(e);
   e.animate([{transform:'scale(.5)',opacity:1},{transform:'scale('+sc+')',opacity:0}],{duration:dur,easing:'ease-out'}).onfinish=()=>e.remove()}
- const t=$('tilt');t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake')}
+ const t=$('tilt');t.style.setProperty('--sh',power);t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake')}
 function cracks(el){const c=document.createElement('div');c.className='crk';
  for(let i=0;i<5;i++){const k=document.createElement('i');k.style.height=(18+Math.random()*26)+'%';k.style.transform=`rotate(${i*72+Math.random()*30}deg)`;c.appendChild(k)}
  el.querySelector('.up').appendChild(c)}
 function moveEl(el,sq,hop){const q=vpos(sq);if(hop){el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop');setTimeout(SND.fx.land,560)}else{SND.fx.move();setTimeout(SND.fx.land,560)}el.style.left=q.x+'%';el.style.top=q.y+'%'}
 
+// weapons drawn in SVG (same look on every phone)
+const WEAPON={
+ p:'<svg viewBox="0 0 40 120"><defs><linearGradient id="wbl" x1="0" x2="1"><stop offset="0" stop-color="#f4f7fb"/><stop offset=".5" stop-color="#b9c2cf"/><stop offset="1" stop-color="#7d8794"/></linearGradient></defs><path d="M20 4 L27 18 L25 82 L15 82 L13 18 Z" fill="url(#wbl)" stroke="#4a525c" stroke-width="1.2"/><rect x="6" y="82" width="28" height="6" rx="2" fill="#c9a24a" stroke="#6b4f1a"/><rect x="16" y="88" width="8" height="22" fill="#5a3a1e"/><circle cx="20" cy="113" r="5" fill="#c9a24a"/></svg>',
+ b:'<svg viewBox="0 0 70 110"><g fill="#8a5a2c" stroke="#3e2410" stroke-width="2"><rect x="8" y="4" width="8" height="58"/><rect x="54" y="4" width="8" height="58"/><rect x="8" y="10" width="54" height="7"/><rect x="8" y="26" width="54" height="7"/><rect x="4" y="58" width="62" height="10" rx="2"/><rect x="8" y="68" width="7" height="38"/><rect x="55" y="68" width="7" height="38"/></g></svg>',
+ r:'<svg viewBox="0 0 70 130"><rect x="31" y="40" width="8" height="86" rx="3" fill="#5a3a1e" stroke="#2a1a0c"/><g fill="#9aa3ad" stroke="#3a4048" stroke-width="2"><path d="M35 2 L41 14 L56 8 L50 22 L66 28 L52 36 L60 50 L45 46 L40 60 L30 60 L25 46 L10 50 L18 36 L4 28 L20 22 L14 8 L29 14 Z"/></g><circle cx="35" cy="31" r="17" fill="#c3cbd4" stroke="#3a4048" stroke-width="2"/></svg>',
+ q:'<svg viewBox="0 0 30 130"><rect x="12" y="14" width="6" height="112" rx="3" fill="#4a2e18" stroke="#24150a"/><circle cx="15" cy="12" r="7" fill="#f6dd8f" stroke="#8a6418"/><circle cx="15" cy="12" r="12" fill="none" stroke="rgba(246,221,143,.6)" stroke-width="2"/></svg>',
+ k:'<svg viewBox="0 0 60 60"><path d="M10 26 Q10 12 22 12 L44 12 Q54 12 54 24 L54 40 Q54 52 40 52 L22 52 Q10 52 10 40 Z" fill="#e9d2b0" stroke="#7a5a3a" stroke-width="2.5"/><path d="M24 12 V26 M34 12 V26 M44 12 V26" stroke="#7a5a3a" stroke-width="2"/><path d="M10 30 Q18 30 20 38" fill="none" stroke="#7a5a3a" stroke-width="2.5"/></svg>'};
+const SWING={p:{dur:300,shake:1},b:{dur:380,shake:1.2},r:{dur:460,shake:1.8},q:{dur:320,shake:1.1},k:{dur:240,shake:.4},n:{dur:520,shake:1.5}};
+function swing(t,atX,atY,dir,dur){const w=document.createElement('div');w.className='weapon w-'+t;w.innerHTML=WEAPON[t];
+ w.style.left=(atX+6.25+dir*3)+'%';w.style.top=(atY-8)+'%';$('pcs').appendChild(w);
+ const a=t==='k'?[{transform:'translate(-50%,-50%) rotateX(-24deg) translateZ(90px) translateX(0) scale(.9)',opacity:0},{transform:'translate(-50%,-50%) rotateX(-24deg) translateZ(90px) translateX('+(-dir*20)+'px) scale(1)',opacity:1,offset:.4},{transform:'translate(-50%,-50%) rotateX(-24deg) translateZ(90px) translateX('+(dir*40)+'px) scale(1.15)',opacity:1,offset:.75},{transform:'translate(-50%,-50%) rotateX(-24deg) translateZ(90px) translateX('+(dir*30)+'px)',opacity:0}]
+  :[{transform:'translate(-50%,-100%) rotateX(-24deg) translateZ(90px) rotate('+(-dir*120)+'deg)',opacity:0},{transform:'translate(-50%,-100%) rotateX(-24deg) translateZ(90px) rotate('+(-dir*110)+'deg)',opacity:1,offset:.25},
+    {transform:'translate(-50%,-100%) rotateX(-24deg) translateZ(90px) rotate('+(dir*70)+'deg)',opacity:1,offset:.8},{transform:'translate(-50%,-100%) rotateX(-24deg) translateZ(90px) rotate('+(dir*80)+'deg)',opacity:0}];
+ w.animate(a,{duration:dur+250,easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>w.remove();
+ if(t==='q'){setTimeout(()=>{for(let i=0;i<8;i++){const sp=document.createElement('div');sp.className='spark';sp.style.left=(atX+6.25+dir*9)+'%';sp.style.top=(atY+4)+'%';$('pcs').appendChild(sp);
+  const ang=Math.random()*Math.PI*2,d=20+Math.random()*40;sp.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:'translate('+Math.cos(ang)*d+'px,'+(Math.sin(ang)*d-20)+'px) scale(.3)',opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>sp.remove()}},dur*.7)}}
 async function animate(m,mover){
  const el=pieceAt[m.from],d=S.turn==='w'?1:-1,vsq=m.flag==='ep'?m.to-8*d:m.to,victim=m.cap?pieceAt[vsq]:null;
  const dur=speed<500?.6:1;
- if(victim){moveEl(el,m.to,true);await wait(620*dur);el.classList.remove('hop');el.classList.add('strike');await wait(240*dur);
-  victim.classList.add('crack');cracks(victim);SND.fx.crack();await wait(240*dur);victim.classList.add('gone');shatter(vsq,Chess.colorOf(m.cap)==='b');SND.fx.shatter();
-  if(Math.random()<.6)setTimeout(()=>bubble(m.to,pickOne(PIECE.strike),Chess.colorOf(m.p)==='b',1200),350);
-  await wait(200);el.classList.remove('strike');setTimeout(()=>victim.remove(),300)}
+ if(victim){const t=m.p.toLowerCase(),sw=SWING[t],qf=vpos(m.from),qt=vpos(vsq),dir=(qt.x-qf.x)>=0?1:-1;
+  // stop just short of the victim, strike with the piece's own weapon, then step in
+  const sx=qt.x-(qt.x-qf.x)*.42,sy=qt.y-(qt.y-qf.y)*.42;el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop');
+  el.style.left=sx+'%';el.style.top=sy+'%';setTimeout(SND.fx.land,560);await wait(620*dur);el.classList.remove('hop');
+  if(Math.random()<.35)bubble(vsq,pline(m.cap,'victim'),Chess.colorOf(m.cap)==='b',900);
+  if(t==='n'){SND.fx.knight();el.classList.add('rear');await wait(520*dur)}
+  else{SND.fx[{p:'pawn',b:'bishop',r:'rook',q:'queen',k:'king'}[t]]();swing(t,sx,sy,dir,sw.dur*dur);el.classList.add('strike');await wait(sw.dur*.75*dur)}
+  victim.classList.add('crack');cracks(victim);SND.fx.crack();await wait(200*dur);victim.classList.add('gone');shatter(vsq,Chess.colorOf(m.cap)==='b',sw.shake);SND.fx.shatter();
+  el.classList.remove('strike','rear');await wait(160);moveEl(el,m.to,false);
+  if(Math.random()<.6)setTimeout(()=>bubble(m.to,pline(m.p,'strike'),Chess.colorOf(m.p)==='b',1500),450);
+  await wait(420*dur);setTimeout(()=>victim.remove(),300)}
  else{moveEl(el,m.to,m.p.toLowerCase()==='n');await wait(640*dur);el.classList.remove('hop')}
  delete pieceAt[m.from];if(victim)delete pieceAt[vsq];pieceAt[m.to]=el;
  if(m.flag==='castle'){const rf={6:7,2:0,62:63,58:56}[m.to],rt={6:5,2:3,62:61,58:59}[m.to],re=pieceAt[rf];moveEl(re,rt,true);delete pieceAt[rf];pieceAt[rt]=re;
-  bubble(rt,pickOne(PIECE.castle),Chess.colorOf(m.p)==='b',1200);await wait(600*dur);re.classList.remove('hop')}
+  const dk=Chess.colorOf(m.p)==='b';bubble(m.to,pline(m.p,'castle'),dk,1400);setTimeout(()=>bubble(rt,pline('r','castle'),dk,1400),1600);await wait(600*dur);re.classList.remove('hop')}
  if(m.promo){const ne=glyphEl(m.p===m.p.toUpperCase()?m.promo.toUpperCase():m.promo),q=vpos(m.to);ne.style.left=q.x+'%';ne.style.top=q.y+'%';
-  el.replaceWith(ne);pieceAt[m.to]=ne;SND.fx.sparkle();bubble(m.to,pickOne(PIECE.promote),Chess.colorOf(m.p)==='b',1500)}
+  el.replaceWith(ne);pieceAt[m.to]=ne;SND.fx.sparkle();bubble(m.to,pline(m.promo,'promote'),Chess.colorOf(m.p)==='b',1800)}
 }
 
 /* ---------- commands ---------- */
@@ -707,15 +832,15 @@ function askPromo(){return new Promise(res=>{const o=$('promo');o.classList.remo
 function setTurnUI(){const top=$('plTop'),bot=$('plBot');top.classList.toggle('turn',S.turn===oppColor());bot.classList.toggle('turn',S.turn===userColor)}
 function capturedUI(){const cap=c=>capBy[c].map(p=>GLYPH[p.toLowerCase()]).join('');$('capBot').textContent=cap(userColor);$('capTop').textContent=cap(oppColor())}
 function oppPersp(){const w=Chess.qscore(S);return oppColor()==='w'?w:-w}
-function emotionFromEval(){const e=oppPersp();return e>250?'good':e<-250?'bad':'calm'}
+function emotionFromEval(){const e=oppPersp();return e>110?'good':e<-110?'bad':'calm'}
 
 async function playUser(m,text){busy=true;
  let quality='ok';
  if(cmdScores){const best=cmdScores[0].v,me=cmdScores.find(x=>x.m.from===m.from&&x.m.to===m.to&&x.m.promo===m.promo);
   if(me){const diff=best-me.v;if(diff>=250)quality='blunder';else if(diff<=10&&cmdScores.filter(x=>x.v<best-150).length>=Math.min(3,cmdScores.length-1)&&cmdScores.length>3)quality='good'}}
  $('cmds').innerHTML='<div class="note">“'+text+'”</div>';
- if(quality==='blunder'&&Math.random()<.8){bubble(m.from,pickOne(PIECE.grumble),userColor==='b',1500);await wait(1500)}
- else{bubble(m.from,pickOne(PIECE.order),userColor==='b',1000);await wait(900)}
+ if(quality==='blunder'&&Math.random()<.8){bubble(m.from,pline(m.p,'grumble'),userColor==='b',1700);await wait(1600)}
+ else{bubble(m.from,pline(m.p,'order'),userColor==='b',1300);await wait(1000)}
  await doMove(m,'user',quality)}
 
 async function doMove(m,who,quality){
@@ -734,7 +859,8 @@ async function doMove(m,who,quality){
  if(m.cap&&'qr'.includes(m.cap.toLowerCase()))highlights.push(no+'수: '+actor+'의 '+iga(KN[m.p.toLowerCase()])+' '+target+'의 '+eul(KN[m.cap.toLowerCase()])+' 박살 냄');
  if(m.promo)highlights.push(no+'수: '+actor+'의 폰이 '+KN[m.promo]+'(으)로 승급');
  markLast();setTurnUI();
- const chk=Chess.inCheck(S);if(chk){SND.fx.check();setTimeout(()=>bubble(m.to,pickOne(PIECE.check),Chess.colorOf(m.p)==='b',1200),200)}
+ const chk=Chess.inCheck(S);if(chk){SND.fx.check();setTimeout(()=>bubble(m.to,pickOne(PIECE.check),Chess.colorOf(m.p)==='b',1200),200);
+  const ks=S.b.indexOf(S.turn==='w'?'K':'k');if(Math.random()<.6)setTimeout(()=>bubble(ks,pline(S.b[ks],'checked'),S.turn==='b',1500),900)}
  // reactions (one opponent line per move)
  const prevEmo=emotion,newEmo=emotionFromEval();
  let line=null,vars={};
@@ -743,7 +869,10 @@ async function doMove(m,who,quality){
   else if(chk)line='checked';
   else if(quality==='blunder')line='blunder';else if(quality==='good')line='good_move'}
  else{if(chk)line='check';else if(m.cap){vars.piece=KN[m.cap.toLowerCase()];line='capture'}}
- if(newEmo!==prevEmo){setEmotion(newEmo);if(!line||Math.random()<.5)line=newEmo==='good'?'winning':newEmo==='bad'?'losing':line}
+ // a capture shows a quick mood swing even when the overall balance has not moved much
+ let flash=null;if(m.cap&&newEmo==='calm')flash=who==='user'?'bad':'good';
+ if(flash){setEmotion(flash);clearTimeout(window._emoT);window._emoT=setTimeout(()=>{if(!gameOver)setEmotion(emotionFromEval())},1900)}
+ else if(newEmo!==prevEmo){setEmotion(newEmo);if(!line||Math.random()<.5)line=newEmo==='good'?'winning':newEmo==='bad'?'losing':line}
  if(line&&(line!=='lost'||Math.random()<.7))setTimeout(()=>say(line,vars),250);
  if(await checkEnd())return;
  busy=false;nextTurn()}
@@ -757,7 +886,7 @@ async function nextTurn(){if(gameOver)return;
   const isOpp=S.turn===oppColor(),cfg=isOpp?DIFF[diffKey()]:DIFF.mid;
   const res=Chess.think(S,cfg.depth,cfg.ms);let m=res[0].m;
   if(cfg.blunder&&Math.random()<cfg.blunder&&res.length>1)m=pickOne(res.slice(0,Math.min(6,res.length))).m;
-  if(!isOpp)bubble(m.from,pickOne(PIECE.order),userColor==='b',900);
+  if(!isOpp)bubble(m.from,pline(m.p,'order'),userColor==='b',1100);
   await doMove(m,isOpp?'opp':'user','ok');return}
  legalNow=Chess.legal(S);busy=false;showCommands()}
 
@@ -829,7 +958,7 @@ function startGame(){S=Chess.load(Chess.START);pieceAt={};reps={};sanLog=[];high
 function coinToss(){const t=$('toss'),c=$('coin'),m=$('tmsg'),pk=$('tpick');t.classList.remove('hide');pk.classList.remove('on');m.textContent='갈레온 금화를 던집니다…';
  const force=Q.get('coin'),heads=force?force==='heads':Math.random()<.5;
  c.classList.remove('flip');void c.offsetWidth;c.style.setProperty('--end',heads?'1800deg':'1980deg');c.classList.add('flip');SND.fx.coin();setTimeout(SND.fx.coinLand,2150);
- const go=col=>{userColor=col;t.classList.add('hide');startGame()};
+ const go=col=>{userColor=col;pk.classList.remove('on');t.classList.add('hide');startGame()};
  setTimeout(()=>{if(heads){m.innerHTML='앞면! <small>흑과 백, 원하는 쪽을 고르시오</small>';pk.classList.add('on');pk.querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.c))}
   else{const oc=Math.random()<.6?'w':'b';m.innerHTML='뒷면… <small>'+iga(C().name)+' '+(oc==='w'?'백':'흑')+'을 골랐습니다. 당신은 '+(oc==='w'?'흑':'백')+'입니다</small>';setTimeout(()=>go(oc==='w'?'b':'w'),2000)}},2300)}
 function begin(watch){oppId=$('sOpp').value;year=+$('sYear').value;ts=$('sTs').checked;userName=$('sName').value.trim()||'당신';mode=watch?'watch':'play';
