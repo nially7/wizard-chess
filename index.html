@@ -972,7 +972,7 @@ async function copyResult(){const t=$('rCode');let ok=false;try{await navigator.
  $('rCopied').textContent=ok?'복사했어요. 채팅창에 붙여 넣어 보내 주세요.':'자동 복사가 막혀 있어요. 위 글을 길게 눌러 전체 선택 후 복사해 주세요.'}
 $('rCopy').onclick=copyResult;$('rCopy2').onclick=copyResult;
 // embedded (RisuAI plugin window): hand the result to the host
-$('rSend').onclick=()=>{try{window.parent.postMessage(lastResult,'*');$('rCopied').textContent='결과를 전달했어요. 창을 닫고 메시지를 보내면 AI가 대국을 묘사합니다.';$('rSend').disabled=true}
+$('rSend').onclick=()=>{try{window.parent.postMessage(lastResult,'*');$('rCopied').textContent='전달하는 중…';$('rSend').disabled=true}
  catch(e){$('rCopied').textContent='전달에 실패했어요. 결과 복사를 이용해 주세요.'}};
 $('rAgain').onclick=()=>{$('result').classList.add('hide');$('rCopied').textContent='';$('rSend').disabled=false;if(mode==='watch')startGame();else coinToss()};
 // standalone only: pick another opponent
@@ -986,11 +986,20 @@ function sndTip(t){const e=$('sndTip');e.textContent=t;e.classList.add('on');cle
 $('bBgm').onclick=e=>{e.stopPropagation();SND.init();const n=SND.justStarted()?SND.pref.bgm:SND.cycleBgm();sndUI();sndTip(n?'♪ '+n+'. '+SND.trackName(n):'브금 꺼짐')};
 $('bSfx').onclick=e=>{e.stopPropagation();SND.init();SND.setSfx(!SND.pref.sfx);sndUI();sndTip(SND.pref.sfx?'효과음 켜짐':'효과음 꺼짐')};
 document.addEventListener('pointerdown',()=>SND.init(),{once:true});
-if(EMBED)document.body.classList.add('embed');
+if(EMBED&&!Q.get('free'))document.body.classList.add('embed');
+if(Q.get('free')){$('sYear').value=Q.get('year')||'3';$('sName').value=Q.get('user')||'';$('sTs').checked=Q.get('ts')==='1'}
+// the RisuAI plugin answers after writing the result into the chat
+window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!=='hp-chess-ack')return;
+ $('rCopied').textContent=d.ok?'채팅에 결과를 넣었어요. 창을 닫고 메시지를 보내면 AI가 대국을 묘사합니다.':'전달하지 못했어요 ('+(d.error||'오류')+'). 결과 복사 후 채팅에 붙여 넣어 주세요.';
+ if(!d.ok)$('rSend').disabled=false});
 $('bAuto').onclick=()=>{auto=!auto;$('bAuto').classList.toggle('on',auto);if(auto)autoUsed=true;if(!busy&&!gameOver&&S)nextTurn();else if(!auto&&S&&S.turn===userColor&&!gameOver)showCommands()};
 $('speed').querySelectorAll('button').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;$('speed').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))});
 $('bResign').onclick=()=>{if(gameOver||!S||mode==='watch')return;highlights.push(S.full+'수: '+iga(userName)+' 기권');finish('lose','resign')};
 // launched from RisuAI with parameters: ?opp=ron&year=3&ts=0&user=이름
-if(Q.get('opp')&&CHARS[Q.get('opp')]){$('sOpp').value=Q.get('opp');$('sYear').value=Q.get('year')||'3';$('sTs').checked=Q.get('ts')==='1';$('sName').value=Q.get('user')||'';begin(Q.get('mode')==='watch')}
+if(Q.get('opp')&&!CHARS[Q.get('opp')]&&Q.get('name')){CHARS.guest={name:Q.get('name'),diff:()=>'mid'};fillSetup();$('sOpp').value='guest'}
+if(Q.get('opp')&&(CHARS[Q.get('opp')]||CHARS.guest)){if(CHARS[Q.get('opp')])$('sOpp').value=Q.get('opp');
+ $('sYear').value=Q.get('year')||'3';$('sTs').checked=Q.get('ts')==='1';$('sName').value=Q.get('user')||'';begin(Q.get('mode')==='watch')}
 window.Chess=Chess;
+// tell the RisuAI plugin window that the game has loaded
+try{if(window.parent!==window)window.parent.postMessage({type:'hp-chess-ready'},'*')}catch(e){}
 </script></body></html>
