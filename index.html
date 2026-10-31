@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마법사 체스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Hahmlet:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#d8b25a;--gold2:#f6dd8f;--gd:#7a5c22;--txt:#ece2c8;--mut:#9c8f74;--glyph:'DejaVu Sans','Segoe UI Symbol','Noto Sans Symbols 2','Apple Symbols',sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+html{background:#070605}
+body{font-family:Hahmlet,'Noto Serif KR','Noto Serif CJK KR',serif;color:var(--txt);
+ background:radial-gradient(70% 55% at 50% 30%,#2a2116 0%,#120e0a 55%,#070605 100%) fixed;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+ background:radial-gradient(18% 22% at 6% 10%,rgba(255,170,70,.16),transparent 70%),radial-gradient(18% 22% at 94% 10%,rgba(255,170,70,.16),transparent 70%)}
+button{font:inherit}
+.app{max-width:1240px;margin:0 auto;padding:20px 16px 34px}
+.hd{text-align:center;margin-bottom:10px}
+.hd small{display:block;font-family:Cinzel,serif;font-size:11px;letter-spacing:.5em;color:#a88a50}
+.hd h1{margin:4px 0 0;font-family:Cinzel,serif;font-weight:900;font-size:30px;letter-spacing:.18em;
+ background:linear-gradient(#fff4c9,#e3bd62 50%,#9b7428);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hd .ko{font-size:12.5px;color:var(--mut);letter-spacing:.2em;margin-top:2px}
+.main{display:flex;gap:20px;align-items:flex-start;justify-content:center}
+
+/* ---------- opponent portrait ---------- */
+.opp{flex:0 0 230px;position:sticky;top:16px;margin-top:40px;z-index:60}
+.opp-frame{position:relative;aspect-ratio:832/1216;border:1px solid var(--gd);
+ background:radial-gradient(80% 60% at 50% 30%,#3a2c1b,#120d08);
+ box-shadow:inset 0 0 0 4px #0b0907,inset 0 0 0 5px rgba(216,178,90,.45),0 18px 40px rgba(0,0,0,.6);overflow:hidden}
+.opp-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0;transition:opacity .35s}
+.opp-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.opp-ph b{font-family:Cinzel,'Noto Serif CJK KR',serif;font-size:64px;color:rgba(216,178,90,.55)}
+.opp-ph span{font-size:12px;color:var(--mut);letter-spacing:.15em}
+.opp.emo-change .opp-frame{animation:emo .45s}
+@keyframes emo{0%{filter:brightness(1)}35%{filter:brightness(1.6) blur(1px);transform:translateX(-3px)}70%{transform:translateX(2px)}100%{filter:none;transform:none}}
+.opp-name{margin-top:10px;text-align:center}
+.opp-name b{display:block;font-size:16px}
+.opp-name span{font-size:11.5px;color:var(--mut);letter-spacing:.08em}
+.emo{display:inline-block;margin-top:6px;padding:3px 12px;font-size:11.5px;font-weight:700;letter-spacing:.15em;border:1px solid var(--gd);color:var(--gold2)}
+.emo.good{color:#ffd48a;border-color:#c9973a;background:rgba(201,151,58,.15)}
+.emo.bad{color:#9fc4ff;border-color:#4f6c99;background:rgba(79,108,153,.15)}
+.emo.win{color:#1a1208;background:linear-gradient(var(--gold2),var(--gold));border-color:var(--gold2)}
+.emo.lose{color:#c9c0ad;border-color:#555;background:rgba(0,0,0,.4)}
+.obub{position:absolute;z-index:61;top:12%;left:calc(100% - 14px);width:max-content;max-width:280px;padding:10px 14px;
+ font-size:14px;font-weight:600;line-height:1.45;color:#2a1d0c;border-radius:12px;
+ background:linear-gradient(#fbf3df,#ead9b2);border:1px solid #b8913f;box-shadow:0 8px 20px rgba(0,0,0,.5);
+ opacity:0;transform:translateY(6px) scale(.96);transform-origin:0 50%;transition:opacity .25s,transform .25s;pointer-events:none}
+.obub::before{content:"";position:absolute;left:-8px;top:18px;border:8px solid transparent;border-right-color:#ead9b2;border-left:0}
+.obub.on{opacity:1;transform:none}
+
+/* ---------- players ---------- */
+.pl{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:0 auto 6px;max-width:600px;
+ background:linear-gradient(90deg,rgba(216,178,90,.08),transparent);border-left:3px solid var(--gd)}
+.pl .av{flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--glyph);font-size:20px;
+ background:radial-gradient(circle at 35% 30%,#3a3328,#151210);border:1px solid var(--gd);overflow:hidden}
+.pl .av img{width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.pl b{font-size:14px}.pl span{font-size:11.5px;color:var(--mut)}
+.pl .cap{margin-left:auto;font-family:var(--glyph);font-size:18px;letter-spacing:-2px;color:#c9c0ad;opacity:.85;text-align:right;max-width:45%;word-break:break-all}
+.pl.turn{border-left-color:var(--gold2);background:linear-gradient(90deg,rgba(246,221,143,.18),transparent)}
+.pl.turn b::after{content:" · 차례";color:var(--gold2);font-size:11px}
+.pl .mbub{display:none}
+
+/* ---------- board ---------- */
+.stage{flex:0 1 600px;min-width:0;perspective:1300px;padding:6px 0 10px}
+.tilt{margin:-24px 0 4px;transform:rotateX(24deg);transform-style:preserve-3d;transform-origin:50% 60%}
+.frame{position:relative;padding:26px;border-radius:6px;background:linear-gradient(135deg,#3b2a19,#22170d 45%,#3b2a19);
+ box-shadow:inset 0 0 0 2px var(--gd),inset 0 0 0 8px #1a120a,inset 0 0 0 9px rgba(216,178,90,.6),0 40px 60px rgba(0,0,0,.75),0 0 80px rgba(255,170,70,.08)}
+.frame::before{content:"";position:absolute;inset:4px;border:1px solid rgba(216,178,90,.25);pointer-events:none}
+.coord{position:absolute;font-family:Cinzel,serif;font-size:11px;color:#b99a5b;display:flex}
+.coord.f{left:26px;right:26px;bottom:6px}.coord.f span{flex:1;text-align:center}
+.coord.r{top:26px;bottom:26px;left:8px;flex-direction:column}.coord.r span{flex:1;display:flex;align-items:center}
+.board{position:relative;aspect-ratio:1;box-shadow:0 0 0 2px #0c0806,0 0 0 3px rgba(216,178,90,.5)}
+.sq{position:absolute;width:12.5%;height:12.5%;cursor:pointer}
+.sq.l{background:radial-gradient(120% 120% at 30% 20%,#efe3c6,#d6c49c 70%,#c4ae82)}
+.sq.d{background:radial-gradient(120% 120% at 30% 20%,#8a6f50,#6b5339 70%,#553f2a)}
+.sq::after{content:"";position:absolute;inset:0;opacity:.35;pointer-events:none;
+ background:repeating-linear-gradient(115deg,transparent 0 9px,rgba(255,255,255,.08) 9px 10px,transparent 10px 23px)}
+.sq.last{box-shadow:inset 0 0 0 999px rgba(246,221,143,.22)}
+.sq.sel{box-shadow:inset 0 0 0 3px rgba(246,221,143,.95),inset 0 0 22px rgba(246,221,143,.6)}
+.sq.prev{box-shadow:inset 0 0 0 3px rgba(246,221,143,.75),inset 0 0 18px rgba(246,221,143,.45)}
+.sq.prevT{box-shadow:inset 0 0 0 3px rgba(220,70,50,.9),inset 0 0 20px rgba(220,70,50,.55)}
+.sq.chk{box-shadow:inset 0 0 0 999px rgba(200,40,30,.35),inset 0 0 26px rgba(255,60,40,.9)}
+.sq .dot{position:absolute;left:50%;top:50%;width:26%;height:26%;margin:-13% 0 0 -13%;border-radius:50%;background:rgba(40,25,10,.4);box-shadow:0 0 0 2px rgba(246,221,143,.5);z-index:1}
+.sq .ring{position:absolute;inset:6%;border-radius:50%;border:4px solid rgba(220,70,50,.7);z-index:1}
+.pcs{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+.pc{position:absolute;width:12.5%;height:12.5%;transform-style:preserve-3d;transition:left .6s cubic-bezier(.5,0,.3,1),top .6s cubic-bezier(.5,0,.3,1)}
+.pc::before{content:"";position:absolute;left:18%;right:18%;bottom:10%;height:16%;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(3px)}
+.up{position:absolute;left:0;right:0;bottom:12%;height:120%;display:flex;align-items:flex-end;justify-content:center;transform:rotateX(-24deg);transform-origin:50% 100%}
+.g{font-family:var(--glyph);font-size:min(9vw,66px);line-height:1;-webkit-background-clip:text;background-clip:text;color:transparent}
+.w .g{background-image:linear-gradient(170deg,#ffffff 0%,#efe7d6 35%,#c2b59a 70%,#8e8068 100%);filter:drop-shadow(0 1px 0 #6b5f4b) drop-shadow(0 4px 4px rgba(0,0,0,.55))}
+.b .g{background-image:linear-gradient(170deg,#7d8693 0%,#3a3f48 35%,#17191d 75%,#0a0b0d 100%);
+ filter:drop-shadow(0 0 1px rgba(255,236,190,.9)) drop-shadow(0 1px 0 rgba(255,236,190,.5)) drop-shadow(0 5px 5px rgba(0,0,0,.7))}
+.pc.hop .up{animation:hop .6s cubic-bezier(.4,0,.3,1)}
+@keyframes hop{0%{transform:rotateX(-24deg) translateY(0)}45%{transform:rotateX(-24deg) translateY(-38%)}100%{transform:rotateX(-24deg) translateY(0)}}
+.pc.strike .up{animation:strike .45s ease-in}
+@keyframes strike{0%{transform:rotateX(-24deg) rotate(0)}40%{transform:rotateX(-24deg) rotate(-14deg) translateY(-12%)}70%{transform:rotateX(-24deg) rotate(10deg) translateY(4%)}100%{transform:rotateX(-24deg) rotate(0)}}
+.pc.crack .g{animation:tremble .38s linear}
+@keyframes tremble{0%,100%{transform:translate(0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-1px)}}
+.pc.gone{opacity:0;transition:opacity .08s}
+.crk{position:absolute;inset:0;pointer-events:none}
+.crk i{position:absolute;left:50%;top:40%;width:2px;background:#fff;box-shadow:0 0 6px #fff;transform-origin:top}
+.shard{position:absolute;pointer-events:none;will-change:transform,opacity}
+.flash{position:absolute;width:12.5%;height:12.5%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,240,200,.95),rgba(255,180,90,.4) 40%,transparent 70%)}
+.dust{position:absolute;width:12.5%;height:12.5%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(220,210,190,.55),transparent 65%)}
+.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:rotateX(24deg) translate(0)}20%{transform:rotateX(24deg) translate(-7px,3px)}40%{transform:rotateX(24deg) translate(6px,-4px)}60%{transform:rotateX(24deg) translate(-4px,2px)}80%{transform:rotateX(24deg) translate(3px,-1px)}}
+.beam{position:fixed;z-index:90;height:14px;transform-origin:0 50%;pointer-events:none;border-radius:7px;
+ background:linear-gradient(90deg,rgba(120,255,140,0),#7dff8a 12%,#e9ffe9 50%,#7dff8a 88%,rgba(120,255,140,.2));
+ box-shadow:0 0 18px 6px rgba(60,255,90,.85),0 0 60px 20px rgba(40,220,70,.5)}
+.greenfx{position:fixed;inset:0;z-index:89;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(140,255,150,.9),rgba(20,180,50,.55) 45%,rgba(0,40,10,.2))}
+.slab{position:absolute;pointer-events:none}
+.bub{position:absolute;z-index:50;transform:translate(-50%,-100%) rotateX(-24deg) translateZ(120px);transform-origin:50% 100%;white-space:nowrap;
+ padding:6px 11px;font-size:13px;font-weight:600;color:#2a1d0c;border-radius:10px;background:linear-gradient(#fbf3df,#ead9b2);border:1px solid #b8913f;
+ box-shadow:0 6px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .25s,margin .25s;margin-top:6px;pointer-events:none}
+.bub::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#ead9b2;border-bottom:0}
+.bub.on{opacity:1;margin-top:0}
+.bub.dark{color:#f1e6cc;background:linear-gradient(#2b2d33,#16171b);border-color:#6b6f78}.bub.dark::after{border-top-color:#16171b}
+
+/* ---------- side ---------- */
+.side{flex:0 0 330px;padding:16px;margin-top:40px;background:linear-gradient(#17120c,#0e0b08);border:1px solid var(--gd);
+ box-shadow:inset 0 0 0 4px #0b0907,inset 0 0 0 5px rgba(216,178,90,.35),0 18px 40px rgba(0,0,0,.6)}
+.sec{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-family:Cinzel,serif;font-size:10.5px;letter-spacing:.35em;color:var(--gold)}
+.sec::before,.sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(216,178,90,.55))}.sec::after{transform:scaleX(-1)}
+.cmds{min-height:180px}
+.cmd{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:8px;padding:10px 12px;text-align:left;cursor:pointer;color:#e6dcc3;
+ background:linear-gradient(90deg,rgba(216,178,90,.1),rgba(216,178,90,.02));border:1px solid rgba(216,178,90,.3);border-left:3px solid var(--gd);transition:.18s}
+.cmd:hover{border-color:var(--gold);border-left-color:var(--gold2);background:linear-gradient(90deg,rgba(216,178,90,.26),rgba(216,178,90,.04));box-shadow:0 0 16px rgba(216,178,90,.18)}
+.cmd .gi{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-family:var(--glyph);font-size:24px;color:#efe6d4;
+ background:radial-gradient(circle at 35% 30%,#3a3328,#151210);border:1px solid var(--gd);border-radius:50%}
+.cmd .tx{flex:1;min-width:0}
+.cmd .tg{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;margin-bottom:2px}
+.tg.attack{color:#ff9e86}.tg.stable{color:#9fd3a8}.tg.bold{color:#d7b0ff}
+.cmd b{display:block;font-size:13.5px;line-height:1.4}
+.cmd small{font-size:11px;color:var(--mut)}
+.note{font-size:12px;color:var(--mut);text-align:center;padding:16px 4px;line-height:1.6}
+.log{max-height:170px;overflow:auto;font-size:12.5px;line-height:1.9;color:#cfc4a8;border-top:1px dashed rgba(216,178,90,.25);padding-top:8px}
+.log div{display:flex;gap:8px}.log em{font-style:normal;color:#8d826a;width:26px;flex:none}.log span{flex:1}
+.log .x{color:#ff9e86}
+.row{display:flex;gap:8px;margin-top:12px;align-items:center}
+.btn{flex:1;padding:9px 0;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--gold);color:#140f08;background:linear-gradient(var(--gold2),var(--gold))}
+.btn.gh{color:var(--gold2);background:transparent}
+.btn:disabled{opacity:.4;cursor:default}
+.sndbar{position:fixed;top:14px;right:14px;z-index:120;display:flex;gap:8px}
+.sndbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:64px;height:64px;padding:0;cursor:pointer;
+ color:var(--gold2);background:rgba(15,11,7,.88);border:1px solid var(--gold);border-radius:8px;
+ box-shadow:inset 0 0 0 2px rgba(15,11,7,.9),inset 0 0 0 3px rgba(216,178,90,.35),0 4px 14px rgba(0,0,0,.5);transition:.2s}
+.sndbar button:hover{border-color:var(--gold2);background:rgba(40,30,15,.95)}
+.sndbar i{font-style:normal;font-size:20px;line-height:1}
+.sndbar span{font-size:10px;color:var(--mut);letter-spacing:.08em}
+.sndbar b{font-family:Cinzel,serif;font-size:12px;line-height:1.1}
+.sndbar button.off{color:#6d6556;border-color:#4a4335}.sndbar button.off b{color:#6d6556}
+.sndtip{position:absolute;top:72px;right:0;white-space:nowrap;padding:5px 10px;font-size:12px;color:#2a1d0c;background:linear-gradient(#fbf3df,#ead9b2);
+ border:1px solid #b8913f;opacity:0;transition:opacity .25s;pointer-events:none}
+.sndtip.on{opacity:1}
+@media (max-width:640px){.sndbar{top:10px;right:10px;gap:6px}.sndbar button{width:46px;height:46px;border-radius:7px}.sndbar i{font-size:15px}.sndbar span{display:none}.sndtip{top:52px}}
+.embed .solo{display:none}
+.speed{display:flex;border:1px solid var(--gd)}
+.speed button{padding:6px 9px;font-size:11.5px;color:var(--mut);background:none;border:0;cursor:pointer}
+.speed button.on{color:#140f08;background:var(--gold)}
+.auto.on{color:#140f08;background:linear-gradient(var(--gold2),var(--gold))}
+
+/* ---------- overlays ---------- */
+.ov{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;
+ background:radial-gradient(60% 50% at 50% 45%,rgba(40,30,18,.94),rgba(5,4,3,.97));transition:opacity .4s}
+.ov.hide{opacity:0;pointer-events:none}
+.ov h2{margin:0;font-family:Cinzel,serif;font-size:13px;letter-spacing:.5em;color:#a88a50;font-weight:700}
+.panel{width:100%;max-width:420px;padding:22px;background:linear-gradient(#17120c,#0e0b08);border:1px solid var(--gd);box-shadow:inset 0 0 0 4px #0b0907,inset 0 0 0 5px rgba(216,178,90,.35)}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:11.5px;color:var(--mut);margin-bottom:4px;letter-spacing:.08em}
+.fld select,.fld input{width:100%;padding:9px 10px;font:inherit;font-size:14px;color:var(--txt);background:#0b0907;border:1px solid var(--gd)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt)}
+.coin-wrap{perspective:700px}
+.coin{position:relative;width:120px;height:120px;transform-style:preserve-3d}
+.coin.flip{animation:flip 2.2s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes flip{0%{transform:translateY(0) rotateY(0)}35%{transform:translateY(-120px) rotateY(1080deg)}100%{transform:translateY(0) rotateY(var(--end))}}
+.face{position:absolute;inset:0;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;backface-visibility:hidden;
+ background:radial-gradient(circle at 35% 30%,#fff3c4,#e3bd62 45%,#9b7428 80%,#6b4f1a);box-shadow:inset 0 0 0 5px #b8913f,inset 0 0 0 7px #fff1b8,inset 0 0 0 9px #8a6418,0 10px 24px rgba(0,0,0,.6);
+ color:#5a3d0c;font-family:Cinzel,serif;font-weight:900}
+.face b{font-size:44px;line-height:1}.face small{font-size:10px;letter-spacing:.25em;margin-top:2px}
+.face.back{transform:rotateY(180deg)}
+.msg{min-height:24px;font-size:16px;font-weight:600;color:#f3e3b8;text-align:center}
+.msg small{display:block;font-size:12px;color:#a99d82;font-weight:400;margin-top:4px}
+.pick{display:flex;gap:12px;opacity:0;transition:opacity .3s;pointer-events:none}
+.pick.on{opacity:1;pointer-events:auto}
+.pick button{display:flex;align-items:center;gap:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--gold)}
+.pick .pw{color:#2a1d0c;background:linear-gradient(#fffaf0,#d9cdb3)}.pick .pb{color:#f1e6cc;background:linear-gradient(#3a3f48,#121418)}
+.pick span{font-family:var(--glyph);font-size:22px}
+.promo{display:flex;gap:10px}
+.promo button{width:64px;height:64px;font-family:var(--glyph);font-size:42px;cursor:pointer;color:#efe6d4;background:radial-gradient(circle at 35% 30%,#3a3328,#151210);border:1px solid var(--gold)}
+.res-t{font-family:Cinzel,'Noto Serif CJK KR',serif;font-size:34px;font-weight:900;letter-spacing:.12em;
+ background:linear-gradient(#fff4c9,#e3bd62 50%,#9b7428);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center}
+.res-s{font-size:13px;color:var(--mut);text-align:center;margin-top:4px}
+.code{width:100%;height:150px;margin-top:14px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.5;color:#d7cdb3;background:#0b0907;border:1px solid var(--gd);resize:none}
+
+@media (max-width:1100px){.opp{flex-basis:180px}.side{flex-basis:300px}}
+@media (max-width:960px){
+ .main{flex-direction:column;align-items:center}.opp{display:none}.side{flex:none;width:100%;max-width:600px;margin-top:0}.stage{flex:none;width:100%;max-width:600px}
+ .pl .mbub{display:block;position:absolute;left:52px;top:100%;z-index:30;max-width:calc(100% - 60px);margin-top:4px;padding:7px 11px;font-size:13px;font-weight:600;color:#2a1d0c;border-radius:10px;
+  background:linear-gradient(#fbf3df,#ead9b2);border:1px solid #b8913f;box-shadow:0 6px 14px rgba(0,0,0,.5);opacity:0;transition:opacity .25s;pointer-events:none}
+ .pl .mbub.on{opacity:1}
+ .pl{position:relative}
+}
+@media (max-width:520px){.frame{padding:18px}.coord.f{left:18px;right:18px;bottom:2px}.coord.r{top:18px;bottom:18px;left:4px}.hd h1{font-size:22px}}
+</style></head><body>
+
+<!-- setup -->
+<div class="ov" id="setup"><h2>WIZARD'S CHESS</h2>
+ <div class="panel">
+  <div class="fld"><label>상대</label><select id="sOpp"></select></div>
+  <div class="fld"><label>학년</label><select id="sYear"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+  <div class="fld"><label class="chk"><input type="checkbox" id="sTs" style="width:auto"> TS (스네이프 · 덤블도어 · 볼드모트)</label></div>
+  <div class="fld"><label>내 이름</label><input id="sName" placeholder="당신"></div>
+  <div class="row"><button class="btn" id="sGo">대국 시작</button><button class="btn gh" id="sWatch">관전 모드</button></div>
+ </div>
+</div>
+<!-- coin toss -->
+<div class="ov hide" id="toss"><h2>COIN TOSS</h2>
+ <div class="coin-wrap"><div class="coin" id="coin"><div class="face"><b>H</b><small>HEADS</small></div><div class="face back"><b>T</b><small>TAILS</small></div></div></div>
+ <div class="msg" id="tmsg">갈레온 금화를 던집니다…</div>
+ <div class="pick" id="tpick"><button class="pw" data-c="w"><span>♔</span>백 (선공)</button><button class="pb" data-c="b"><span>♚</span>흑 (후공)</button></div>
+</div>
+<!-- promotion -->
+<div class="ov hide" id="promo"><h2>PROMOTION</h2><div class="msg">폰이 무엇이 될까요?</div>
+ <div class="promo"><button data-p="q">♛</button><button data-p="r">♜</button><button data-p="b">♝</button><button data-p="n">♞</button></div></div>
+<!-- result -->
+<div class="ov hide" id="result"><h2>FINAL</h2>
+ <div class="panel"><div class="res-t" id="rT">승리</div><div class="res-s" id="rS"></div>
+  <textarea class="code" id="rCode" readonly></textarea>
+  <div class="row" id="rRowEmbed" style="display:none"><button class="btn" id="rSend">결과 전달</button><button class="btn gh" id="rCopy2">결과 복사</button></div>
+  <div class="row" id="rRowSolo"><button class="btn" id="rCopy">결과 복사</button></div>
+  <div class="row"><button class="btn gh" id="rAgain">한 판 더</button><button class="btn gh solo" id="rOther">다른 상대</button></div>
+  <div class="res-s" id="rCopied" style="min-height:18px"></div>
+ </div>
+</div>
+
+<div class="sndbar"><button id="bBgm"><i>♪</i><span>브금</span><b id="bgmN">1</b></button><button id="bSfx"><i>♫</i><span>효과음</span><b id="sfxN">ON</b></button><div class="sndtip" id="sndTip"></div></div>
+<div class="app">
+ <div class="hd"><small>HOGWARTS · WIZARD'S CHESS</small><h1>WIZARD'S CHESS</h1><div class="ko">마법사 체스</div></div>
+ <div class="main">
+  <div class="opp" id="opp">
+   <div class="opp-frame"><div class="opp-ph" id="oppPh"><b id="oppIni">?</b><span id="oppPhEmo">평온</span></div><img id="oppImg" alt=""></div>
+   <div class="obub" id="obub"></div>
+   <div class="opp-name"><b id="oppName">상대</b><span id="oppDiff"></span><br><span class="emo" id="oppEmo">평온</span></div>
+  </div>
+  <div class="stage">
+   <div class="pl" id="plTop"><div class="av" id="avTop"></div><div><b id="nmTop"></b><br><span id="sbTop"></span></div><div class="cap" id="capTop"></div><div class="mbub" id="mbub"></div></div>
+   <div class="tilt" id="tilt"><div class="frame">
+    <div class="coord r" id="crdR"></div>
+    <div class="board" id="board"><div class="pcs" id="pcs"></div></div>
+    <div class="coord f" id="crdF"></div>
+   </div></div>
+   <div class="pl" id="plBot" style="margin-top:12px"><div class="av" id="avBot"></div><div><b id="nmBot"></b><br><span id="sbBot"></span></div><div class="cap" id="capBot"></div></div>
+  </div>
+  <div class="side">
+   <div class="sec">COMMANDS</div>
+   <div class="cmds" id="cmds"><div class="note">대국을 준비하는 중…</div></div>
+   <div class="sec" style="margin-top:14px">RECORD</div>
+   <div class="log" id="log"></div>
+   <div class="row">
+    <button class="btn gh auto" id="bAuto">자동 진행</button>
+    <div class="speed" id="speed"><button data-s="1500">느리게</button><button data-s="800" class="on">보통</button><button data-s="300">빠르게</button></div>
+   </div>
+   <div class="row"><button class="btn gh" id="bResign">기권</button><button class="btn gh solo" id="bOther">다른 상대</button></div>
+  </div>
+ </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   1. CHESS ENGINE  (board[0..63], a1 = 0, h8 = 63, uppercase = white)
+   ===================================================================== */
+const Chess=(()=>{
+ const N_D=[[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
+ const K_D=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+ const B_D=[[1,1],[1,-1],[-1,1],[-1,-1]],R_D=[[1,0],[-1,0],[0,1],[0,-1]];
+ const VAL={p:100,n:320,b:330,r:500,q:900,k:0};
+ const colorOf=p=>p===p.toUpperCase()?'w':'b';
+ const sqName=s=>'abcdefgh'[s&7]+((s>>3)+1);
+ const P=(t)=>t.trim().split(/\s+/).map(Number);
+ const PST={
+  p:P(`0 0 0 0 0 0 0 0 50 50 50 50 50 50 50 50 10 10 20 30 30 20 10 10 5 5 10 25 25 10 5 5 0 0 0 20 20 0 0 0 5 -5 -10 0 0 -10 -5 5 5 10 10 -20 -20 10 10 5 0 0 0 0 0 0 0 0`),
+  n:P(`-50 -40 -30 -30 -30 -30 -40 -50 -40 -20 0 0 0 0 -20 -40 -30 0 10 15 15 10 0 -30 -30 5 15 20 20 15 5 -30 -30 0 15 20 20 15 0 -30 -30 5 10 15 15 10 5 -30 -40 -20 0 5 5 0 -20 -40 -50 -40 -30 -30 -30 -30 -40 -50`),
+  b:P(`-20 -10 -10 -10 -10 -10 -10 -20 -10 0 0 0 0 0 0 -10 -10 0 5 10 10 5 0 -10 -10 5 5 10 10 5 5 -10 -10 0 10 10 10 10 0 -10 -10 10 10 10 10 10 10 -10 -10 5 0 0 0 0 5 -10 -20 -10 -10 -10 -10 -10 -10 -20`),
+  r:P(`0 0 0 0 0 0 0 0 5 10 10 10 10 10 10 5 -5 0 0 0 0 0 0 -5 -5 0 0 0 0 0 0 -5 -5 0 0 0 0 0 0 -5 -5 0 0 0 0 0 0 -5 -5 0 0 0 0 0 0 -5 0 0 0 5 5 0 0 0`),
+  q:P(`-20 -10 -10 -5 -5 -10 -10 -20 -10 0 0 0 0 0 0 -10 -10 0 5 5 5 5 0 -10 -5 0 5 5 5 5 0 -5 0 0 5 5 5 5 0 -5 -10 5 5 5 5 5 0 -10 -10 0 5 0 0 0 0 -10 -20 -10 -10 -5 -5 -10 -10 -20`),
+  k:P(`-30 -40 -40 -50 -50 -40 -40 -30 -30 -40 -40 -50 -50 -40 -40 -30 -30 -40 -40 -50 -50 -40 -40 -30 -30 -40 -40 -50 -50 -40 -40 -30 -20 -30 -30 -40 -40 -30 -30 -20 -10 -20 -20 -20 -20 -20 -20 -10 20 20 0 0 0 0 20 20 20 30 10 0 0 10 30 20`),
+  ke:P(`-50 -40 -30 -20 -20 -30 -40 -50 -30 -20 -10 0 0 -10 -20 -30 -30 -10 20 30 30 20 -10 -30 -30 -10 30 40 40 30 -10 -30 -30 -10 30 40 40 30 -10 -30 -30 -10 20 30 30 20 -10 -30 -30 -30 0 0 0 0 -30 -30 -50 -30 -30 -30 -30 -30 -30 -50`)};
+ // PST tables are written rank 8 first; white square s -> index (7-r)*8+f, black -> r*8+f
+ function load(fen){
+  const [pl,turn,cs,ep,half,full]=fen.split(' ');const b=Array(64).fill('');let r=7,f=0;
+  for(const ch of pl){if(ch==='/'){r--;f=0}else if(/\d/.test(ch))f+=+ch;else{b[r*8+f]=ch;f++}}
+  return {b,turn,c:{K:cs.includes('K'),Q:cs.includes('Q'),k:cs.includes('k'),q:cs.includes('q')},
+   ep:ep==='-'?-1:('abcdefgh'.indexOf(ep[0])+(+ep[1]-1)*8),half:+half||0,full:+full||1};
+ }
+ const START='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+ function attacked(b,sq,by){
+  const f=sq&7,r=sq>>3;const at=(ff,rr)=>ff>=0&&ff<8&&rr>=0&&rr<8?b[rr*8+ff]:null;
+  if(by==='w'){if(at(f-1,r-1)==='P'||at(f+1,r-1)==='P')return true}else{if(at(f-1,r+1)==='p'||at(f+1,r+1)==='p')return true}
+  const n=by==='w'?'N':'n',k=by==='w'?'K':'k',bq=by==='w'?['B','Q']:['b','q'],rq=by==='w'?['R','Q']:['r','q'];
+  for(const [df,dr] of N_D)if(at(f+df,r+dr)===n)return true;
+  for(const [df,dr] of K_D)if(at(f+df,r+dr)===k)return true;
+  for(const [df,dr] of B_D){let ff=f+df,rr=r+dr;while(ff>=0&&ff<8&&rr>=0&&rr<8){const p=b[rr*8+ff];if(p){if(p===bq[0]||p===bq[1])return true;break}ff+=df;rr+=dr}}
+  for(const [df,dr] of R_D){let ff=f+df,rr=r+dr;while(ff>=0&&ff<8&&rr>=0&&rr<8){const p=b[rr*8+ff];if(p){if(p===rq[0]||p===rq[1])return true;break}ff+=df;rr+=dr}}
+  return false;
+ }
+ const kingSq=(b,side)=>b.indexOf(side==='w'?'K':'k');
+ const inCheck=s=>attacked(s.b,kingSq(s.b,s.turn),s.turn==='w'?'b':'w');
+ function pseudo(s){
+  const b=s.b,side=s.turn,opp=side==='w'?'b':'w',out=[];
+  const add=(from,to,flag)=>{const p=b[from],cap=flag==='ep'?(side==='w'?'p':'P'):b[to];
+   if(p.toLowerCase()==='p'&&((to>>3)===7||(to>>3)===0)){for(const pr of ['q','r','b','n'])out.push({from,to,p,cap,promo:pr,flag:''})}
+   else out.push({from,to,p,cap,promo:'',flag:flag||''})};
+  for(let sq=0;sq<64;sq++){const p=b[sq];if(!p||colorOf(p)!==side)continue;const t=p.toLowerCase(),f=sq&7,r=sq>>3;
+   const enemy=x=>x&&colorOf(x)===opp;
+   if(t==='p'){const d=side==='w'?1:-1,st=side==='w'?1:6,one=sq+8*d;
+    if(one>=0&&one<64&&!b[one]){add(sq,one);if(r===st&&!b[one+8*d])add(sq,one+8*d,'double')}
+    for(const df of [-1,1]){const nf=f+df;if(nf<0||nf>7)continue;const to=(r+d)*8+nf;if(to<0||to>63)continue;
+     if(enemy(b[to]))add(sq,to);else if(to===s.ep)add(sq,to,'ep')}}
+   else if(t==='n'||t==='k'){for(const [df,dr] of (t==='n'?N_D:K_D)){const ff=f+df,rr=r+dr;if(ff<0||ff>7||rr<0||rr>7)continue;const to=rr*8+ff;if(!b[to]||enemy(b[to]))add(sq,to)}
+    if(t==='k'){const c=s.c;
+     if(side==='w'&&sq===4){
+      if(c.K&&b[7]==='R'&&!b[5]&&!b[6]&&!attacked(b,4,'b')&&!attacked(b,5,'b'))add(4,6,'castle');
+      if(c.Q&&b[0]==='R'&&!b[1]&&!b[2]&&!b[3]&&!attacked(b,4,'b')&&!attacked(b,3,'b'))add(4,2,'castle');}
+     if(side==='b'&&sq===60){
+      if(c.k&&b[63]==='r'&&!b[61]&&!b[62]&&!attacked(b,60,'w')&&!attacked(b,61,'w'))add(60,62,'castle');
+      if(c.q&&b[56]==='r'&&!b[57]&&!b[58]&&!b[59]&&!attacked(b,60,'w')&&!attacked(b,59,'w'))add(60,58,'castle');}}}
+   else{for(const [df,dr] of (t==='b'?B_D:t==='r'?R_D:B_D.concat(R_D))){let ff=f+df,rr=r+dr;
+     while(ff>=0&&ff<8&&rr>=0&&rr<8){const to=rr*8+ff;if(!b[to])add(sq,to);else{if(enemy(b[to]))add(sq,to);break}ff+=df;rr+=dr}}}
+  }
+  return out;
+ }
+ function apply(s,m){
+  const b=s.b.slice(),side=s.turn,d=side==='w'?1:-1;
+  b[m.from]='';if(m.flag==='ep')b[m.to-8*d]='';
+  b[m.to]=m.promo?(side==='w'?m.promo.toUpperCase():m.promo):m.p;
+  if(m.flag==='castle'){if(m.to===6){b[5]=b[7];b[7]=''}else if(m.to===2){b[3]=b[0];b[0]=''}else if(m.to===62){b[61]=b[63];b[63]=''}else if(m.to===58){b[59]=b[56];b[56]=''}}
+  const c={...s.c};if(m.p==='K'){c.K=c.Q=false}if(m.p==='k'){c.k=c.q=false}
+  for(const x of [m.from,m.to]){if(x===0)c.Q=false;if(x===7)c.K=false;if(x===56)c.q=false;if(x===63)c.k=false}
+  return {b,turn:side==='w'?'b':'w',c,ep:m.flag==='double'?m.from+8*d:-1,
+   half:(m.p.toLowerCase()==='p'||m.cap)?0:s.half+1,full:s.full+(side==='b'?1:0)};
+ }
+ function legal(s){const out=[];for(const m of pseudo(s)){const ns=apply(s,m);if(!attacked(ns.b,kingSq(ns.b,s.turn),ns.turn)){m.ns=ns;out.push(m)}}return out}
+ function evalWhite(s){let sc=0,mat=0;for(let i=0;i<64;i++){const p=s.b[i];if(p&&p.toLowerCase()!=='k'&&p.toLowerCase()!=='p')mat+=VAL[p.toLowerCase()]}
+  const end=mat<=1600;
+  for(let i=0;i<64;i++){const p=s.b[i];if(!p)continue;const t=p.toLowerCase(),w=p!==t,f=i&7,r=i>>3;
+   const tb=t==='k'&&end?PST.ke:PST[t];const v=VAL[t]+tb[w?(7-r)*8+f:r*8+f];sc+=w?v:-v}
+  return sc}
+ const evalSide=s=>s.turn==='w'?evalWhite(s):-evalWhite(s);
+ const MATE=100000,INF=1e9,ABORT={};
+ let deadline=0,timed=false,nodes=0;
+ function order(ms){return ms.sort((a,b)=>((b.cap?10*VAL[b.cap.toLowerCase()]-VAL[b.p.toLowerCase()]/10:0)+(b.promo?800:0))-((a.cap?10*VAL[a.cap.toLowerCase()]-VAL[a.p.toLowerCase()]/10:0)+(a.promo?800:0)))}
+ function quiesce(s,alpha,beta,qd){
+  const stand=evalSide(s);if(stand>=beta)return beta;if(stand>alpha)alpha=stand;if(qd>=5)return alpha;
+  const caps=order(legal(s).filter(m=>m.cap||m.promo==='q'));
+  for(const m of caps){const v=-quiesce(m.ns,-beta,-alpha,qd+1);if(v>=beta)return beta;if(v>alpha)alpha=v}
+  return alpha}
+ function negamax(s,depth,alpha,beta,ply){
+  if((++nodes&1023)===0&&timed&&Date.now()>deadline)throw ABORT;
+  if(depth<=0)return quiesce(s,alpha,beta,0);
+  const ms=legal(s);if(!ms.length)return inCheck(s)?-MATE+ply:0;
+  if(s.half>=100)return 0;
+  order(ms);
+  for(const m of ms){const v=-negamax(m.ns,depth-1,-beta,-alpha,ply+1);if(v>=beta)return beta;if(v>alpha)alpha=v}
+  return alpha}
+ function rootSearch(s,d,prev){
+  let ms=legal(s);if(prev){const rank=new Map(prev.map((x,i)=>[x.m.from+'-'+x.m.to+x.m.promo,i]));ms.sort((a,b)=>rank.get(a.from+'-'+a.to+a.promo)-rank.get(b.from+'-'+b.to+b.promo))}else order(ms);
+  let alpha=-INF;const out=[];
+  for(const m of ms){const v=-negamax(m.ns,d-1,-INF,-alpha,1);out.push({m,v});if(v>alpha)alpha=v}
+  return out.sort((a,b)=>b.v-a.v)}
+ // best-move search with a time budget (iterative deepening)
+ function think(s,maxDepth,ms){let res=null;nodes=0;deadline=Date.now()+ms;
+  for(let d=1;d<=maxDepth;d++){timed=d>1;try{res=rootSearch(s,d,res)}catch(e){if(e!==ABORT)throw e;break}}
+  timed=false;return res}
+ // exact score of every legal move (used for the three commands)
+ function scoreAll(s,depth){timed=false;return legal(s).map(m=>({m,v:-negamax(m.ns,depth-1,-INF,INF,1)})).sort((a,b)=>b.v-a.v)}
+ function qscore(s){timed=false;const q=quiesce(s,-INF,INF,0);return s.turn==='w'?q:-q}
+ function san(s,m,ms){
+  if(m.flag==='castle')return (m.to&7)===6?'O-O':'O-O-O';
+  const t=m.p.toLowerCase();let out='';
+  if(t==='p'){if(m.cap)out='abcdefgh'[m.from&7]+'x'}
+  else{out=t.toUpperCase();const others=ms.filter(x=>x!==m&&x.p===m.p&&x.to===m.to&&x.from!==m.from);
+   if(others.length){const sf=others.some(x=>(x.from&7)===(m.from&7)),sr=others.some(x=>(x.from>>3)===(m.from>>3));
+    out+=!sf?'abcdefgh'[m.from&7]:!sr?String((m.from>>3)+1):sqName(m.from)}
+   if(m.cap)out+='x'}
+  out+=sqName(m.to);if(m.promo)out+='='+m.promo.toUpperCase();
+  const ns=m.ns||apply(s,m);if(inCheck(ns))out+=legal(ns).length?'+':'#';
+  return out}
+ function perft(s,d){if(!d)return 1;let n=0;for(const m of legal(s))n+=d===1?1:perft(m.ns,d-1);return n}
+ const key=s=>s.b.map(x=>x||'.').join('')+s.turn+(s.c.K?'K':'')+(s.c.Q?'Q':'')+(s.c.k?'k':'')+(s.c.q?'q':'')+s.ep;
+ function insufficient(s){const rest=s.b.filter(p=>p&&p.toLowerCase()!=='k');
+  return rest.length===0||(rest.length===1&&'nb'.includes(rest[0].toLowerCase()))}
+ return {load,START,legal,apply,inCheck,attacked,think,scoreAll,qscore,san,perft,key,insufficient,sqName,colorOf,VAL,MATE,evalWhite};
+})();
+
+/* =====================================================================
+   2. CHARACTERS · LINES
+   ===================================================================== */
+const DIFF={weak:{depth:1,ms:300,blunder:.35,label:'약함'},mid:{depth:2,ms:600,blunder:.1,label:'보통'},
+ strong:{depth:3,ms:1100,blunder:0,label:'강함'},max:{depth:4,ms:1800,blunder:0,label:'최강'}};
+const CHARS={
+ ron:{name:'론 위즐리',diff:y=>y<=3?'strong':'max'},
+ harry:{name:'해리 포터',diff:y=>y<=3?'weak':'mid'},
+ draconia:{name:'드라코니아 말포이',diff:()=>'mid'},
+ hermione:{name:'헤르미온느 그레인저',diff:y=>y<=3?'mid':'strong'},
+ cho:{name:'초 챙',diff:()=>'weak'},
+ parvati:{name:'파르바티 파틸',diff:()=>'mid'},
+ ginny:{name:'지니 위즐리',diff:()=>'weak'},
+ luna:{name:'루나 러브굿',diff:()=>'mid'},
+ neville:{name:'네빌 롱바텀',diff:()=>'weak'},
+ lockhart:{name:'길더로이 록하트',diff:()=>'max'},
+ bellatrix:{name:'벨라트릭스 레스트레인지',diff:()=>'strong'},
+ snape:{name:'세베루스 스네이프',ts:true,diff:()=>'strong'},
+ dumbledore:{name:'알버스 덤블도어',ts:true,diff:()=>'max'},
+ voldemort:{name:'볼드모트',ts:true,diff:()=>'weak',flip:true}};
+// opponent lines: LINES[id] (id = ron, snape_m, snape_ts ...). Empty situations fall back to GENERIC.
+const GENERIC={
+ start:['좋아, 한 판 해볼까.','먼저 둬도 괜찮아.','잘 부탁해, {user}.'],
+ capture:['{piece}, 잘 가.','그건 내가 가져갈게.','거기 두면 안 되지.'],
+ lost:['아…','그건 예상 못 했네.','괜찮아, 아직이야.'],
+ lost_queen:['내 여왕이…!','이건 좀 아픈데.','…집중해야겠어.'],
+ check:['체크.','왕을 지켜야 할걸.','체크야, {user}.'],
+ checked:['어?','잠깐만.','이런.'],
+ good_move:['좋은 수네.','…오.','제법인데.'],
+ blunder:['그거 진심이야?','고마워, {user}.','음, 그건 실수 같은데.'],
+ winning:['흐름이 좋아.','슬슬 끝이 보이네.','이대로 가자.'],
+ losing:['이상한데…','다시 생각해 보자.','쉽지 않네.'],
+ thinking:['음…','잠깐 생각 좀.','어디 보자…'],
+ win:['체크메이트.','내가 이겼어.','좋은 승부였어.'],
+ lose:['…졌어.','네가 이겼어, {user}.','다음엔 안 져.'],
+ draw:['무승부네.','비긴 걸로 하자.','결판은 다음에.'],
+ flip:['이딴 게임!','감히 나를…!','더는 못 참는다!']};
+// LINES[id] = list of year segments {lo,hi,s:{situation:[lines]}}
+const LINES={"harry": [{"lo": 1, "hi": 3, "s": {"start": ["체스는 론한테 배운 게 전부인데… 잘 부탁해.", "내 체스 말들이 날 좀 믿어줬으면 좋겠네.", "해보자, {user}. 최선을 다해볼게!"], "capture": ["오, 방금 건 꽤 괜찮았지? 미안, {piece}!", "론이 알려준 대로 하니까 진짜 잡히네.", "좋아, {piece} 하나 잡았다!"], "lost": ["앗, 거기 있는 줄 몰랐어…", "내 말이 방금 나보고 한숨 쉰 것 같은데.", "으음, 빗자루 타는 것보다 훨씬 어렵네."], "lost_queen": ["안 돼, 내 여왕이!", "론이 보면 또 한소리 하겠는걸…", "제일 중요한 말을 잃었네. 큰일이다."], "check": ["어, 이거… 체크 맞지, {user}?", "체크! 운이 좀 따랐나 봐.", "조심해, 네 왕이 위험해."], "checked": ["헉, 언제 그렇게 들어왔어?", "잠깐만, 왕을 어디로 피해야 하지…", "방심했다. 금방 빠져나갈게."], "good_move": ["와, 방금 그 수는 진짜 멋졌다, {user}.", "론이랑 두는 것 같아. 대단한데?", "완전히 허를 찔렸어. 좋은 수야."], "blunder": ["어라? {user}, 거기 두면 위험하지 않아?", "방금 건 실수지? 고맙게 잡을게.", "나한테도 기회가 오긴 오네."], "winning": ["어쩐지 오늘따라 말들이 말을 잘 듣더라니!", "내가 이기고 있는 거 맞지? 신기하다.", "이대로만 가면 이길 수 있겠어!"], "losing": ["역시 체스는 내 전공이 아닌가 봐…", "골든 스니치라도 잡아서 역전하고 싶네.", "불리하긴 한데, 끝까지 포기 안 해."], "thinking": ["음… 론이라면 이럴 때 어떻게 뒀을까.", "잠깐만, 내 비숍이 고개를 젓고 있어서…", "어디로 가야 함정이 아닐까…"], "win": ["내가 이겼어! 론한테 자랑해야지!", "휴, 아슬아슬했다. 좋은 경기였어, {user}.", "체크메이트! 나 체스에 소질 있나 봐."], "lose": ["역시 {user} 네가 훨씬 잘 두네. 완패야.", "다음엔 론한테 특훈 받고 다시 도전할게.", "졌지만 재밌었어! 한 판 더 할래?"], "draw": ["비겼네! 안 진 게 어디야.", "휴, 무승부라니 다행이다.", "막상막하였네, {user}. 재밌었어."]}}, {"lo": 4, "hi": 6, "s": {"start": ["덤벼봐, {user}. 예전보단 꽤 늘었거든.", "잠깐 머리 식히는 데는 체스만 한 게 없지.", "봐주지 마, {user}. 진지하게 둘 거니까."], "capture": ["그 {piece}, 방심하고 있던데?", "빈틈이 보였어. {piece}는 가져갈게.", "좋아, 계획대로 흘러가고 있어."], "lost": ["칫, 그건 미처 못 봤네.", "하나쯤 내주는 건 감수해야지.", "반격이 매서운데, {user}?"], "lost_queen": ["이런… 여왕을 잃다니, 타격이 크네.", "아직 끝난 건 아니야. 끝까지 가보자.", "여왕 없이 이기면 더 멋지겠지."], "check": ["체크. 빠져나갈 구멍은 막아뒀어.", "체크야, {user}. 이제 어떻게 할래?", "네 왕을 계속 가만히 두진 않을 거야."], "checked": ["역시 호락호락하지 않네.", "그 정도 위협으론 안 무너져.", "침착하게… 옆으로 피하면 되겠지."], "good_move": ["제법인데, {user}. 오러 시험 봐도 되겠어.", "그 수는 정말 예상 못 했어. 대단해.", "헤르미온느 못지않게 날카로운 수네."], "blunder": ["아무리 나라도 그 정도 실수는 안 놓쳐.", "무슨 일 있어, {user}? 너답지 않은 수인데.", "기회를 줬으니 사양 않고 받을게."], "winning": ["승기가 이쪽으로 기울었어.", "아무래도 이번 판은 내가 가져갈 것 같네.", "슬슬 마무리 지어볼까, {user}."], "losing": ["궁지에 몰렸네… 하지만 돌파구는 있을 거야.", "이보다 더한 위기도 넘겨봤으니까.", "아직 체크메이트는 아니야. 지켜봐."], "thinking": ["섣불리 움직이면 함정에 걸리겠어…", "다음 수를 좀 더 길게 봐야겠는데.", "잠깐만, 흐름을 읽는 중이야."], "win": ["체크메이트. 예전의 나라고 생각하면 곤란해.", "이겼다! 오랜만에 기분 좋은 승리네.", "좋은 승부였어, {user}. 네 덕에 즐거웠어."], "lose": ["깔끔하게 졌네. 역시 너한테는 안 되겠다.", "내 패배야, {user}. 다음엔 꼭 설욕할게.", "대단해. 꼼짝도 못 하고 당했어."], "draw": ["무승부라… 둘 다 한 치도 안 물러섰네.", "승부는 다음으로 미뤄야겠어.", "치열했다, {user}. 좋은 경기였어."]}}, {"lo": 7, "hi": 7, "s": {"start": ["전쟁 통에 체스라니… 그래도 너랑 두면 마음이 진정돼, {user}.", "잠깐이라도 볼드모트 생각을 잊고 싶어. 시작하자.", "무슨 일이 있어도 끝까지 버텨내는 거야, 우리처럼."], "capture": ["미안하지만 비켜줘야겠어, {piece}. 지금은 물러설 수 없거든.", "빈틈을 놓치지 않는 건 이제 습관이 됐네.", "{piece}는 가져갈게. 한 수 한 수가 실전 같아."], "lost": ["칫… 너무 많은 걸 동시에 생각하느라 놓쳤네.", "희생 없이는 이길 수 없는 싸움도 있는 법이니까…", "괜찮아. 아직 무너지지 않았어."], "lost_queen": ["여왕을 잃었네… 가장 소중한 걸 잃는 기분은 언제나 끔찍해.", "아직 끝난 건 아니야. 절망하기엔 이르니까.", "나 혼자 남더라도 이 판은 끝까지 책임질 거야."], "check": ["체크야, {user}. 이제 결단을 내릴 시간이야.", "퇴로는 막았어. 어떻게 뚫고 나올지 보여줘.", "체크. 마지막까지 긴장 늦추지 마."], "checked": ["역시 숨 돌릴 틈을 안 주네, {user}.", "위기에는 익숙해. 어떻게든 빠져나가 볼게.", "막다른 곳 같아도 길은 늘 있었으니까."], "good_move": ["대단해, {user}. 네가 우리 편이라는 게 얼마나 다행인지 몰라.", "그 수는 정말 소름 돋았어. 완벽한 일격이야.", "너와 함께라면 어떤 전투든 이길 수 있을 것 같아."], "blunder": ["{user}, 많이 피곤한가 보네. 방금 수는 너답지 않았어.", "날 배려해 줄 필요는 없어. 정정당당하게 가자.", "아무리 작은 틈이라도 지금은 놓칠 수가 없네."], "winning": ["끝이 보이기 시작했어. 조금만 더 밀어붙이면 돼.", "이 판에서만큼은 아무도 다치지 않고 이기고 싶네.", "승기가 잡혔어. 마지막까지 방심하지 않을 거야."], "losing": ["쉽지 않네… 마치 끝없는 어둠 속을 걷는 기분이야.", "그래도 포기한다는 선택지는 나한테 없어.", "마지막 한 수가 남을 때까지는 패배한 게 아니야."], "thinking": ["잠깐만… 흉터가 조금 시큰거려서 집중이 안 됐어.", "더 이상의 희생을 줄이려면 신중해야 해…", "덤블도어 교수님이라면 이럴 때 어떤 선택을 하셨을까…"], "win": ["체크메이트. 고마워, {user}. 네 덕분에 오랜만에 웃어봤어.", "이겼네… 우리가 치를 진짜 싸움도 이렇게 끝나기를 바랄 뿐이야.", "좋은 승부였어. 오늘 밤은 악몽을 안 꿀 수 있을 것 같아."], "lose": ["내 패배야, {user}. 역시 너는 날 뛰어넘는구나.", "깔끔하게 졌어. 네가 내 등 뒤를 지켜준다면 든든하겠어.", "졌지만 마음은 한결 가벼워졌어. 고마워, 친구."], "draw": ["비겼네. 서로 살아남았다는 것만으로도 충분해.", "무승부라… 지금 우리에겐 가장 평화로운 결과일지도 몰라.", "이 전쟁이 끝나면, 그때 다시 웃으면서 승부를 내자, {user}."]}}], "draconia": [{"lo": 1, "hi": 3, "s": {"start": ["흥, 특별히 나랑 둘 기회를 주는 거야, {user}!", "말포이 가문의 체스 실력을 똑똑히 보여줄게!", "우, 우연히 시간 남아서 놀아주는 거니까 착각 마!"], "capture": ["호호홋! 네 {piece} 따위 내 상대가 안 돼!", "바보 아냐? 거기 두니까 바로 잡히잖아!", "그 {piece}는 내가 접수할게. 고마워해라?"], "lost": ["앗! 바, 방금 건 실수야! 요술지팡이가 아니라 손이 미끄러졌어!", "흥! 그깟 말 하나, 불쌍해서 일부러 준 거거든?", "치사해! 내가 안 보는 사이에 노리다니!"], "lost_queen": ["꺄악! 내 여왕을 잡으면 어떡해, 이 바보야!", "이, 이럴 리가 없어! 이 체스 말들 불량품 아니야?!", "아빠한테 일러서 이 체스판 당장 바꾸라고 할 거야!"], "check": ["체크! 어쩔래? 무릎 꿇고 항복할래?", "후훗, 도망칠 곳도 없으면서 발버둥 치긴!", "내 앞에선 네 왕도 꼼짝 못 한다니까!"], "checked": ["힉?! 자, 잠깐만! 왜 내 왕을 노리는 건데?!", "야, {user}! 여자한테 너무 봐주지도 않는 거 아냐?!", "비켜, 비켜! 얼른 내 왕 앞을 막으란 말이야!"], "good_move": ["으… 방금 건 쪼끔 인정해 줄게. 아주 조금!", "뭐야, {user}… 생각보다 머리 잘 굴리잖아?", "흥, 운이 좋았을 뿐이거든? 우쭐대지 마!"], "blunder": ["푸하하! 그게 최선이야? 한심하긴!", "눈 감고 뒀니, {user}? 덕분에 편하게 가겠네!", "거봐, 내 옆에서 배워야 한다니까?"], "winning": ["당연한 결과지! 날 이길 생각은 안 했겠지?", "지금이라도 리나 님 봐주세요 하면 생각해 줄게!", "너무 쉬워서 하품이 다 나오네, 호호!"], "losing": ["으으… 왜 자꾸 내 말만 없어지는 건데!", "웃지 마, {user}! 아직 안 끝났단 말이야!", "이상해… 오늘따라 체스판이 이상하게 기울었어!"], "thinking": ["조용히 해봐! 지금 엄청 중요한 작전 짜는 중이야!", "음… 크래브랑 고일처럼 앞에 세워둘 말이 없나…", "재촉하지 마! 원래 우아하게 고민하는 거거든?"], "win": ["체크메이트! 봤지? 이게 바로 내 실력이야!", "이겼으니까 내일도 나랑 놀아… 아니, 내 시중들어!", "흥, 상으로 내가 받은 고급 사탕 하나 나눠줄게!"], "lose": ["으아앙! 무효야, 방금 판은 무효라고!", "네가 자꾸 쳐다보니까 긴장해서 틀린 거잖아, 바보야!", "한 판 더 해! 내가 이길 때까지 절대 못 일어나!"], "draw": ["흥! 오늘은 특별히 비겨준 줄 알아!", "무승부? 내가 거의 다 이긴 판이었는데 아깝네!", "다음엔 확실히 밟아줄 테니까 딱 기다려, {user}!"]}}, {"lo": 4, "hi": 6, "s": {"start": ["후훗, 나랑 단둘이 체스라니… 영광인 줄 알아, {user}.", "지면 내 소원 들어주기야. 딴말하기 없기다?", "그렇게 빤히 쳐다보지 말고 첫 수나 두시지?"], "capture": ["어머, 이 {piece}는 내가 데려갈게.", "나한테 정신 팔려서 {piece} 지키는 걸 깜빡했나 봐?", "후훗, 빈틈투성이네, {user}."], "lost": ["칫… 꽤 날카롭게 파고드네.", "그 정도 미끼는 기꺼이 내줄 수 있어.", "너무 봐주지 않는 거 아니야? 흥."], "lost_queen": ["내 여왕을…! {user}, 진짜 진심으로 나오는구나?", "크윽, 자존심 상하게… 두고 봐, 바로 갚아줄 테니까!", "여왕이 없다고 내가 쉽게 무너질 것 같아?"], "check": ["체크야, {user}. 내 손바닥 안이라니까?", "자, 이제 어디로 도망쳐 볼래?", "체크. 내 눈을 똑바로 보고 막아봐."], "checked": ["앗… 제법인데? 하지만 이 정도로 날 못 잡아.", "건방지게 내 왕을 위협하다니, 가만 안 둬.", "후우… 잠깐 방심했을 뿐이야."], "good_move": ["…인정하기 싫지만, 방금 수는 꽤 멋졌어.", "너, 은근히 사람 당황하게 만드는 재주가 있다니까.", "제법이잖아, {user}. 조금 반할 뻔했어… 농담이야!"], "blunder": ["어머나, 그렇게 대놓고 틈을 보여주면 어떡해?", "일부러 나한테 져주려는 건 아니지, {user}?", "그런 어설픈 수로 날 이기겠다고? 웃기지 마."], "winning": ["승부는 이미 기운 것 같은데… 항복할래?", "내가 이기면 오늘 저녁까지 내 옆에 붙어있어야 해.", "후훗, 네가 쩔쩔매는 얼굴 보는 것도 꽤 재밌네."], "losing": ["입 다물어… 아직 역전할 기회는 남아있으니까.", "으으, 왜 이렇게 안 풀리지… 너 때문이야, {user}!", "그렇게 여유 부리다가 큰코다칠걸?"], "thinking": ["잠깐만… 네 속셈을 좀 읽어야겠어.", "음… 이쪽으로 가면 네가 어떻게 나올까…", "시끄러워, 나도 지금 진지하게 생각 중이거든?"], "win": ["체크메이트! 자, 약속대로 오늘 하루는 내 거야.", "후훗, 날 이기려면 아직 멀었어, {user}.", "이겼으니까… 상으로 내 손잡게 해줄게. 빨리 잡아, 바보야."], "lose": ["…졌어. 네가 이겼다고, 됐지?!", "반칙이야… 네가 앞에 있으면 집중이 안 된단 말이야.", "그렇게 웃지 마! 기분 나쁘니까 한 판 더 해!"], "draw": ["비겼네… 뭐, 너 정도면 내 라이벌로 인정해 줄게.", "승부가 안 났으니 한 판 더 해야겠지? 도망갈 생각 마.", "흥, 아쉽게 놓쳤네. 다음엔 꼭 내가 이길 거야."]}}, {"lo": 7, "hi": 7, "s": {"start": ["…그래, {user}. 잠깐이라도 너랑 있으면 숨이 좀 쉬어지니까.", "지금은 아무 생각 없이 체스판만 보고 싶어… 시작하자.", "네가 옆에 있어 줘서 다행이야. 천천히 두자."], "capture": ["…{piece}, 가져갈게. 미안해.", "빈틈이 보였어, {user}.", "아직은… 이 정도 계산은 할 수 있나 봐."], "lost": ["…괜찮아. 잃는 것엔 이제 익숙하니까.", "아… 거기 있었구나. 미처 못 봤어.", "내 마음이 너무 어지러운가 봐…"], "lost_queen": ["여왕마저 잃었네… 마치 지금의 나처럼.", "…아무것도 지키지 못하는 기분이야.", "괜찮아, {user}. 그냥 게임일 뿐이잖아…"], "check": ["체크… 도망칠 곳이 있다는 건 좋은 거야.", "체크야, {user}. 조심해.", "네 왕이 위험해… 얼른 피해."], "checked": ["…역시 포위당하는 건 숨이 막히네.", "어디로 도망쳐야 할지… 잘 모르겠어.", "막아내야 하는데… 손이 조금 떨리네."], "good_move": ["…역시 넌 늘 정답을 찾아내는구나, {user}.", "대단해. 너처럼 앞을 내다볼 수 있다면 좋았을 텐데.", "좋은 수야… 네가 든든하게 느껴져."], "blunder": ["…{user}, 나 배려해 주려고 일부러 그런 거지?", "그렇게 봐주지 않아도 괜찮아… 난 괜찮으니까.", "실수했네… 고마워, 조금 웃음이 나왔어."], "winning": ["내가 이기고 있네… 오랜만에 느껴보는 기분이야.", "이 판에서만큼은 내 뜻대로 움직여주네.", "조금만 더… 이 시간을 끌고 싶어."], "losing": ["…어차피 내 마음대로 되는 건 하나도 없으니까.", "무너지고 있네… 날 좀 잡아줄래, {user}?", "이 체스판 위에서도 난 도망칠 곳이 없구나…"], "thinking": ["…미안, 잠깐 딴생각을 했어.", "어떤 선택을 해야 후회하지 않을까…", "조금만 기다려줘, {user}. 머리가 복잡해서…"], "win": ["체크메이트… 고마워, 나한테 작은 승리를 선물해 줘서.", "이겼네… 오늘 밤은 조금 편히 잘 수 있을 것 같아.", "가끔은 이렇게 아무 일 없는 것처럼 웃고 싶었어."], "lose": ["…네가 이겼어, {user}. 너한테 지는 건 싫지 않네.", "내 패배야… 이제 내 손 좀 잡아줄래?", "끝났네… 그래도 아직 가지 마, 제발."], "draw": ["아무도 다치지 않고 끝났네… 다행이야.", "무승부라니… 우리에겐 이게 가장 좋은 결말일지도 몰라.", "비겼으니까… 조금만 더 내 옆에 있어 줘, {user}."]}}], "hermione": [{"lo": 1, "hi": 3, "s": {"start": ["『마법사 체스의 정석』을 다 읽었으니, 이번엔 안 질 거야!", "론한테 맨날 진다고 나까지 얕보지 마, {user}.", "규칙대로 정정당당하게 두자. 준비됐지?"], "capture": ["책에서 본 전술 그대로야! {piece}는 가져갈게.", "거기 두면 잡힌다고『체스 입문서』34쪽에 나와 있어.", "논리적으로 계산된 수였어. 미안, {piece}!"], "lost": ["어머! 책에선 이럴 때 안 잡힌다고 했는데…", "잠깐 실수한 거야. 내 계획엔 차질 없어!", "으음… 이론이랑 실전은 조금 다른 걸까?"], "lost_queen": ["말도 안 돼! 내 여왕이 왜 거기서 잡히는 거지?!", "이럴 수가… 가장 중요한 전력을 잃었잖아!", "당황하지 말자, 헤르미온느… 아직 방법이 있을 거야."], "check": ["체크! 이번 수는 꽤 교과서적이지 않았어?", "체크야, {user}. 빠져나오기 쉽지 않을걸?", "내 계산대로라면 지금 네 왕이 위험해!"], "checked": ["앗! 언제 거기까지 들어온 거야?", "기습적인 수네… 하지만 방어법은 다 외워뒀어!", "내 왕한테 너무 무례하게 구는 거 아니야?"], "good_move": ["오… 그건 책에서도 못 본 창의적인 수인데, {user}!", "대단해! 어떻게 그런 생각을 해냈어?", "론 못지않은 감각이네. 솔직히 감탄했어."], "blunder": ["{user}, 방금 수는 확률적으로 아주 무모한 선택이야.", "어라? 그렇게 기본적인 실수를 하다니, 집중 안 해?", "내가 잔소리하긴 싫지만, 방금 수는 정말 별로였어."], "winning": ["역시 예습해 둔 보람이 있네! 흐름이 완벽해.", "내 계산대로라면 다섯 수 안에 끝날 거야.", "포기하지 않는 건 좋지만, 전세는 이미 기울었어."], "losing": ["이럴 리가 없는데… 내가 공식을 잘못 적용했나?", "체스는 역시 비논리적인 변수가 너무 많아…!", "론이 옆에서 훈수라도 두면 좋겠네… 으으."], "thinking": ["가만있어 봐, 이 기물 배치는 3장에서 봤던 건데…", "조용히 해봐, {user}. 경우의 수를 계산 중이니까.", "신중해야 해. 실기 시험 본다고 생각하자…"], "win": ["체크메이트! 거봐, 독서와 논리가 이긴다니까!", "해냈다! 론한테도 이 방법으로 이겨볼까 봐!", "좋은 경기였어, {user}. 복기까지 같이 해볼래?"], "lose": ["으으… 도서관 가서 체스 관련 서적을 더 찾아봐야겠어.", "네 직관력이 내 이론을 이겼네. 축하해, {user}.", "졌지만 많이 배웠어. 다음엔 절대 안 틀릴 거야!"], "draw": ["무승부네! 이론상 가장 균형 잡힌 결과야.", "지지 않았으니 만족해. 꽤 유익한 대국이었어.", "다음번엔 확실하게 승패를 가려보자, {user}."]}}, {"lo": 4, "hi": 6, "s": {"start": ["반장 업무 끝내고 잠깐 쉬는 중이야. 한 판 두자, {user}.", "예전의 나처럼 책에만 의존하진 않아. 각오해.", "네가 얼마나 늘었는지 확인해 볼까?"], "capture": ["그 {piece}는 내 동선에 걸렸어. 가져갈게.", "세 수 앞부터 노리고 있던 자리야, {user}.", "침착하게 하나씩 줄여나가면 결국 내가 이겨."], "lost": ["아… 방금 건 내가 너무 성급했네.", "괜찮아, 그 정도 희생은 감수할 수 있어.", "역시 넌 내 예상을 자꾸 벗어난다니까."], "lost_queen": ["이런, 여왕을 내주다니… 뼈아픈 실수네.", "너무 방심했나 봐. 지금부터 진짜 집중할게.", "여왕이 없어도 전략으로 만회해 보이겠어."], "check": ["체크. 퇴로는 이미 다 계산해 뒀어, {user}.", "체크야. 이 포위망을 어떻게 뚫을지 궁금하네.", "자, 이제 네 선택을 보여줘."], "checked": ["역시 날카롭네, {user}. 하지만 대비책은 있어.", "아슬아슬했어. 한 박자만 늦었어도 큰일 날 뻔했네.", "그렇게 쉽게 무너지진 않아."], "good_move": ["훌륭한 수야, {user}. 솔직히 소름이 좀 돋았어.", "고대 룬 문자 해석하는 것보다 네 수 읽기가 더 어렵네.", "완벽한 타이밍이야. 나도 배워야겠는걸?"], "blunder": ["{user}, 피곤해? 방금 수는 너답지 않게 허술했어.", "나한테 일부러 봐주려는 거라면 사양할게.", "치명적인 빈틈이네. 놓치지 않고 잡겠어."], "winning": ["판 전체가 내 통제 아래에 있어.", "이제 변수는 거의 사라졌네, {user}.", "내가 이기면 오늘 도서관 정리 좀 도와줄래?"], "losing": ["쉽지 않네… 네가 판을 완전히 주도하고 있어.", "하지만 끝날 때까지 포기하는 건 내 방식이 아니야.", "침착하자… 분명 어딘가에 돌파구가 있을 거야."], "thinking": ["잠깐만, 네 의도가 뭔지 파악하는 중이야.", "여기서 무리하면 역습을 맞을 텐데…", "두 가지 선택지 중에 뭐가 더 확실할까…"], "win": ["체크메이트. 이제 나도 체스로 무시당할 수준은 아니지?", "이겼네, {user}. 너랑 두는 시간은 늘 즐거워.", "승리는 내 거네. 약속대로 도서관까지 가방 좀 들어줄래?"], "lose": ["완패야, {user}. 네 앞에서는 내 계산이 자꾸 흐트러져.", "정말 대단해. 론이랑 붙어도 네가 이기겠는걸?", "졌네… 그래도 너랑 두는 판은 지더라도 기분이 나쁘지 않아."], "draw": ["비겼네. 서로 한 치의 양보도 없었어.", "무승부라니, 우리 실력이 딱 비슷한가 봐.", "머리 쓰는 데는 최고였어. 고마워, {user}."]}}, {"lo": 7, "hi": 7, "s": {"start": ["방어 마법은 다 쳐뒀으니, 잠깐이라도 체스를 두며 숨 좀 돌리자, {user}.", "불안을 잠재우는 데는 논리적인 게임에 집중하는 게 최고거든.", "지금의 우린 책 속의 이론보다 훨씬 더 강해졌으니까. 시작하자."], "capture": ["냉정하게 들리겠지만, 변수는 미리 제거해야 해. {piece}는 가져갈게.", "세 수 앞까지 계산된 포획이야, {user}.", "미안, 지금은 작은 틈도 허용할 수 없는 시기라서."], "lost": ["아… 내 계산이 조금 어긋났네.", "모든 걸 완벽하게 통제할 순 없는 법이지… 괜찮아.", "아까운 말을 잃었지만, 전체적인 계획은 흔들리지 않아."], "lost_queen": ["여왕을 잃다니… 가장 큰 전력을 상실했네.", "절망적인 상황일수록 이성을 유지해야 해. 아직 방법은 있어.", "여왕이 없어도 남은 기물들의 연대로 이겨 보이겠어."], "check": ["체크야, {user}. 모든 퇴로를 논리적으로 봉쇄했어.", "체크. 이 위기를 어떻게 타개할지 보여줘.", "결단을 내려야 할 순간이야, {user}."], "checked": ["윽, 방어선에 구멍이 뚫렸네… 하지만 당황하지 않을 거야.", "날카로운 기습이야, {user}. 바로 보호막을 세워야겠어.", "수세에 몰렸다고 무너질 우리가 아니잖아?"], "good_move": ["정말 훌륭한 수야, {user}. 네 냉철한 판단력엔 늘 의지하게 돼.", "어떤 마법 서적에도 나와 있지 않은 완벽한 돌파구네.", "대단해… 이래서 내가 널 믿고 따를 수밖에 없다니까."], "blunder": ["{user}, 눈 밑이 많이 어두워 보여. 피로 때문에 집중력이 흐려졌나 봐.", "방금 수는 너무 위험했어. 부디 실전에선 그렇게 무모하게 굴지 마.", "마음이 아프지만, 승부는 승부니까 이 틈은 가져갈게."], "winning": ["승기가 완전히 이쪽으로 넘어왔어.", "우리가 겪고 있는 이 긴 싸움도 결국엔 이렇게 정의로운 승리로 끝날 거야.", "이제 마무리를 지을 시간이야, {user}."], "losing": ["전세가 너무 불리하네… 구슬 가방 속에 역전할 만한 것도 없는데.", "하지만 끝까지 포기하지 않을 거야. 우린 늘 불가능을 해냈으니까.", "침착하자… 가장 어두운 순간에 길이 보이는 법이야."], "thinking": ["잠깐만, 머릿속으로 수많은 가능성을 시뮬레이션하는 중이야…", "감정에 휘둘리지 말고 가장 확실한 길을 찾아야 해…", "조금만 기다려줘, {user}. 이 한 수에 모든 게 걸려 있어."], "win": ["체크메이트. 고마워, {user}… 잠시나마 평범한 학생으로 돌아간 기분이었어.", "내가 이겼네. 이 작은 승리가 우리에게 행운을 가져다주면 좋겠어.", "좋은 대국이었어. 이제 따뜻한 차라도 한잔 마시면서 좀 쉬자."], "lose": ["내 패배야, {user}. 네 직관과 결단력이 내 계산을 뛰어넘었어.", "정말 대단해. 너한테 지는 건 이상하게도 마음이 놓이네.", "완패를 인정할게. 평화가 찾아오면 도서관에서 다시 도전할 거야, 약속해."], "draw": ["무승부네… 아무도 쓰러지지 않고 끝나서 다행이라는 생각이 들어.", "서로 최선을 다했으니 후회는 없어. 고마워, {user}.", "승부는 이 모든 시련이 끝난 뒤로 남겨두자. 그날까지 꼭 무사해야 해."]}}], "cho": [{"lo": 1, "hi": 7, "s": {"start": ["나는 체스보다 퀴디치가 더 익숙한데… 살살 해줘, {user}.", "너랑 마주 앉아서 두는 거라 조금 떨리네.", "래번클로라고 다 체스를 잘 두는 건 아니거든? 후훗."], "capture": ["어머, 내가 {piece}를 잡았네? 미안해라.", "다행이다, 내 말이 제 역할을 해줬어.", "이 {piece}는 잠깐 내가 데려가도 되지?"], "lost": ["앗… 내 말이 부서지는 건 볼 때마다 불쌍해.", "아차, 거기 길이 열려 있었구나…", "너무 매섭게 몰아붙이는 거 아니야, {user}?"], "lost_queen": ["꺄아, 내 여왕이…! 제일 예쁜 말이었는데.", "여왕을 잃었으니 이제 어떡하면 좋지…", "{user}, 너무해… 여왕만은 지켜주고 싶었는데."], "check": ["어머, 이거 체크 맞지? 후훗.", "체크야, {user}. 스니치 잡을 때처럼 재빨랐지?", "네 왕이 위험해 보여. 조심해."], "checked": ["앗, 깜짝이야… 심장 떨어질 뻔했어.", "잠깐만, 왕을 어디로 숨겨야 안전할까…", "그렇게 갑자기 들어오면 당황스럽잖아."], "good_move": ["와아… 방금 그 수, 정말 멋있었어, {user}.", "어떻게 그렇게 한눈에 판을 다 읽는 거야? 부럽다.", "너 진짜 체스 잘 두는구나… 다시 봤어."], "blunder": ["어라? {user}, 이거 나한테 주는 선물인가?", "나 봐주려고 일부러 실수한 건 아니지?", "후훗, 아무리 나라도 이건 잡아야겠는걸."], "winning": ["어쩐지 오늘 운이 좋더라니! 내가 이기고 있네?", "설마 내가 {user}를 이기게 되는 걸까? 두근거려.", "이대로 골든 스니치까지 잡아버릴 기세야!"], "losing": ["으음… 역시 너한테는 상대가 안 되나 봐.", "내 말들이 다 어디로 사라진 걸까… 슬프네.", "지고는 있지만, 너랑 마주 앉아 있는 것만으로도 좋아."], "thinking": ["음… 어디로 두면 네가 깜짝 놀랄까?", "잠깐만 기다려줘, 길을 찾는 중이야.", "그렇게 쳐다보면 부끄러워서 생각이 안 나잖아…"], "win": ["체크메이트! 세상에, 내가 정말 이긴 거야?", "기뻐라! 오늘 일기장에 꼭 적어둬야겠어, {user}.", "봐준 거 아니지? 이겼으니까 호그스미드에서 버터맥주 사줘!"], "lose": ["역시 {user} 네가 훨씬 강하네. 내 패배야.", "졌지만 즐거웠어. 대신 다음에 빗자루 타는 법은 내가 알려줄게!", "너무 완벽하게 져서 할 말이 없네, 후훗."], "draw": ["비겼네! 난 너한테 안 진 것만으로도 대만족이야.", "사이좋게 무승부라니, 이게 제일 마음에 들어.", "다음번에도 이렇게 나랑 시간 보내줄 거지, {user}?"]}}], "parvati": [{"lo": 1, "hi": 7, "s": {"start": ["오늘 점술 시간에 내가 이길 운세라고 나왔거든, {user}!", "라벤더한테 내기 걸었으니까 나 꼭 이겨야 해!", "재밌겠다! 지는 사람이 개구리 초콜릿 사기 어때?"], "capture": ["꺄하, 내 예감이 적중했어! {piece} 잘 가~!", "거기 두면 잡힐 줄 알았지! 내 촉이 좀 무섭거든.", "미안, {piece}! 내 승리를 위해 비켜줘야겠어."], "lost": ["앗! 내 찻잎 점괘에선 이런 일 없었는데?!", "잠깐, 방금 건 안 치면 안 돼? 응?", "너무해, {user}! 여자애한테 그렇게 인정사정없기야?"], "lost_queen": ["안 돼! 내 여왕이 부서졌잖아! 트릴로니 교수님이 말한 불길한 징조인가 봐!", "여왕을 잡아가다니, {user} 너 진짜 나빴어!", "으앙, 제일 중요한 말을 잃었네… 불길해라!"], "check": ["체크~! 어때, 내 직감이 장난 아니지?", "호호, 네 왕에게 그림자가 드리우고 있어, {user}!", "체크야! 이제 빠져나가기 힘들걸?"], "checked": ["헉! 갑자기 체크라니, 심장에 안 좋잖아!", "잠깐만, 내 왕의 오라가 흔들리고 있어…!", "비켜, 비켜! 얼른 막아야 해!"], "good_move": ["우와, {user}! 너 설마 내 미래를 읽은 거야?", "방금 그 수 완전 멋있었어! 라벤더도 반하겠는데?", "소름 돋았어… 어떻게 내 생각을 딱 맞췄지?"], "blunder": ["어머나, {user}! 네 수호성이 오늘 위치가 안 좋은가 봐?", "후훗, 그런 실수를 해주면 고맙게 받아먹어야지!", "웬일이야~ 나한테 점수를 다 퍼주네?"], "winning": ["거봐, 오늘 내 행운의 날이라니까! 완승이 코앞이야!", "라벤더한테 자랑할 생각 하니까 벌써 신난다!", "개구리 초콜릿 무슨 맛으로 고를지 생각 중이야, 호호!"], "losing": ["이상하다… 수정구슬을 잘못 읽었나? 왜 지고 있지?", "으으, {user} 네 기운이 너무 강해서 내 운세가 밀리나 봐!", "아직 안 끝났어! 극적인 역전극이 펼쳐질 운명이라고!"], "thinking": ["음… 우주의 기운이 어디로 가라고 속삭이는지 듣는 중이야.", "잠깐만, 손금 좀 보고… 아, 이쪽이 길운이네!", "재촉하지 마, 영감이 떠오르려고 하니까!"], "win": ["체크메이트! 꺄아, 역시 트릴로니 교수님 말씀이 맞았어!", "이겼다! 약속대로 개구리 초콜릿 잊지 마, {user}!", "후훗, 내 직감의 승리네! 언제든 또 덤벼!"], "lose": ["흥! 오늘 별자리가 안 맞았을 뿐이거든?", "완전히 졌네… 내일 운세 좋을 때 다시 붙어, {user}!", "너 체스 진짜 잘 둔다… 휴게실에 소문내야지!"], "draw": ["어머, 무승부라니! 우리 둘의 파장이 똑같나 봐!", "승패가 안 갈렸다는 건… 우리 사이에 특별한 인연이 있다는 뜻 아닐까?", "비겼으니까 개구리 초콜릿은 반반씩 나눠 먹자!"]}}], "ginny": [{"lo": 1, "hi": 3, "s": {"start": ["어, 어… 나랑 체스 두자고, {user}? 자, 잘 부탁해…!", "론 오빠 어깨너머로 배운 거라… 못 둬도 웃지 마.", "심장이 너무 빨리 뛰어서 말을 잘 잡을 수 있을지 모르겠어…"], "capture": ["앗, 자, 잡았다! 미안해, {piece}…!", "어라? 진짜로 잡혔네… 다행이다.", "오빠들이 알려준 대로 해봤는데 통했나 봐!"], "lost": ["힉! 내 말이… 아, 아깝다.", "으으, 내가 너무 바보같이 뒀나 봐… 창피해.", "네가 자꾸 쳐다보니까 손이 떨려서 실수했잖아…"], "lost_queen": ["꺄악! 내 여왕이…! 어떡해, 벌써 잡혔어…", "여왕도 못 지키는 한심한 애라고 생각하겠지…?", "으앙, 제일 센 말이 없어졌네… 이제 끝났나 봐."], "check": ["저기, {user}… 이, 이거 체크 맞지?", "체크…! 나도 모르게 좋은 데로 갔네.", "조심해, 네 왕이 위험해 보여…"], "checked": ["앗?! 어, 어떡하지… 얼굴에 열이 확 올라왔어!", "잠깐만, 기다려줘! 어디로 도망쳐야 하지…!", "그렇게 몰아붙이면 머리가 새하얘진단 말이야…"], "good_move": ["우와… 역시 {user} 넌 엄청 똑똑하구나.", "멋있다… 론 오빠보다 더 잘 두는 것 같아!", "난 그런 수는 꿈도 못 꾸는데… 대단해."], "blunder": ["어…? {user}, 거기 두면 내가 잡을 수 있는데… 괜찮아?", "설마 내가 불쌍해서 일부러 봐주는 거야…?", "고, 고마워… 이건 조심스럽게 가져갈게."], "winning": ["어, 어라? 내가 이기고 있는 거야? 꿈만 같아!", "엄마한테 편지로 자랑해도 될까… 헤헤.", "아직 떨리지만… 이대로 이겨보고 싶어!"], "losing": ["역시 나한테는 너무 무리였나 봐…", "오빠들한테도 맨날 지는데, 너한테 이길 리가 없지…", "그래도 너랑 단둘이 있는 시간이 길어졌으니 괜찮아…"], "thinking": ["음… 프레드랑 조지 오빠가 가르쳐준 건 반칙이겠지…?", "자, 잠깐만… 너무 긴장돼서 앞이 잘 안 보여.", "어디로 가야 네가 날 바보로 안 볼까…"], "win": ["체, 체크메이트! 세상에, 내가 {user}를 이겼어!", "진짜 봐준 거 아니지? 나 오늘 잠 다 잤다…!", "너무 기뻐! 다, 다음에 또 나랑 놀아줄 거지?"], "lose": ["으음… 역시 내 패배네. 그래도 엄청 재밌었어!", "내가 너무 시시했지? 다음엔 더 연습해 올게…!", "졌지만… 오늘 나랑 체스 둬줘서 정말 고마워, {user}."], "draw": ["비, 비겼다! 휴, 창피는 안 당해서 다행이야…", "무승부라니… 너랑 똑같이 끝났다는 게 기분 좋네.", "안 졌으니까 다음에 한 판 더 해줄래, {user}?"]}}, {"lo": 4, "hi": 6, "s": {"start": ["좋아, {user}! 이제 네 앞에서 얼굴만 붉히던 꼬마가 아니라고.", "론한테는 못 이겨도 너한테는 안 질 자신 있거든?", "봐주기 없기다? 정면 승부로 가자!"], "capture": ["얍! 그 {piece}는 내 거야, {user}!", "퀴디치 추격꾼의 눈썰미를 얕보지 말라고!", "후훗, 한눈팔면 바로 채간다?"], "lost": ["칫, 아깝게 하나 내줬네!", "괜찮아, 공격하려면 이 정도 희생은 기본이지!", "오호, 제법인데? 승부욕이 불타오르는걸!"], "lost_queen": ["윽, 내 여왕을 잡다니…! 박쥐 코딱지 귀신 저주라도 날리고 싶네!", "여왕 잃었다고 기죽을 줄 알았어? 지금부터가 진짜야!", "크으, 제일 아끼는 말이었는데! 두고 봐, {user}!"], "check": ["체크! 자, 거침없이 몰아붙여 볼까?", "체크야, {user}! 피할 수 있으면 피해봐!", "방심했지? 내 공격은 생각보다 빠르거든!"], "checked": ["어라? 날 코너로 몰겠다 이거지?", "흥, 그 정도 압박으론 눈 하나 깜짝 안 해!", "아슬아슬했네! 바로 빠져나가 줄게."], "good_move": ["오~ 방금 수는 진짜 감탄했어, {user}. 멋지다.", "역시 만만치 않네. 이래야 이길 맛이 나지!", "내 수를 완벽하게 읽었구나? 기분 좋은 소름인데?"], "blunder": ["푸흡, {user}! 방금 건 프레드도 안 속겠다!", "나한테 반해서 손이 미끄러졌나 봐? 잘 먹을게!", "그런 빈틈을 보이면 내가 봐줄 수가 없지!"], "winning": ["어때? 위즐리 가문 막내의 매운맛이!", "승리는 이미 내 손안에 들어온 것 같네, 후훗.", "지금 항복하면 벌칙은 가볍게 해줄 수도 있는데?"], "losing": ["으으… 생각보다 수비가 너무 탄탄하잖아!", "아직 경기 종료 호루라기는 안 불었어! 끝까지 간다!", "잠깐만, 역전할 찬스를 노리는 중이니까 웃지 마!"], "thinking": ["음… 확 뚫어버릴까, 아니면 한 템포 쉴까…", "잠깐만, 급하게 두다가 또 론한테 놀림당하기 싫거든.", "어딜 찔러야 네가 당황할까나…"], "win": ["체크메이트! 이겼다! 이제 날 대등한 라이벌로 봐줘야겠지?", "해냈어! 상으로 오늘 나랑 호그스미드 데이트 가자, {user}!", "후훗, 기분 최고다! 언제든 재도전 받아줄게!"], "lose": ["아깝다! 조금만 더 밀어붙였으면 이기는 거였는데!", "깔끔하게 졌네. 역시 넌 대단해, {user}.", "분하지만 인정할게! 대신 바로 리매치야, 알았지?"], "draw": ["무승부? 에이, 기왕이면 확실하게 결판을 내고 싶었는데!", "뭐, 너랑 비긴 거면 꽤 선전했네. 재밌었어!", "다음 판에 진정한 승자를 가려보자고, {user}!"]}}], "luna": [{"lo": 1, "hi": 7, "s": {"start": ["네 말들 주변에 붕붕거리는 랙스퍼트가 없네. 좋은 대국이 되겠어.", "체스 말들도 가끔은 자기 마음대로 산책하고 싶어 하거든.", "안녕, {user}. 푸딩 먹기 전에 가볍게 한 판 둘래?"], "capture": ["어머, 네 {piece}가 내 말과 친구가 되고 싶었나 봐.", "{piece}가 잠시 쉬러 갔어. 너무 걱정하지 마.", "내 말이 방금 그 자리를 아주 마음에 들어 했거든."], "lost": ["내 말이 부서졌네… 그래도 수리 마법이 있으니 슬프진 않아.", "아마 헬리오패스가 지나가면서 내 말을 밀쳤나 봐.", "괜찮아, 비워진 자리에는 새로운 공기가 들어오니까."], "lost_queen": ["내 여왕이 떠났네… 왕이 조금 외로워하겠어.", "여왕이 사라진 건 구겨진 뿔 스노크랙을 찾으러 간 걸지도 몰라.", "가장 빛나던 말이었지만, 없어도 경기는 계속되니까."], "check": ["체크야, {user}. 네 왕의 머리 위에 핑퐁 방울이 울리고 있어.", "내 말이 네 왕에게 인사하고 싶대. 체크.", "조심해, 네 왕 주변의 기운이 조금 흔들리고 있어."], "checked": ["어머, 내 왕이 깜짝 놀라서 왕관을 떨어뜨릴 뻔했어.", "네 말이 아주 용감하게 다가왔네. 인사만 하고 비켜줄게.", "위험한 순간이네… 다행히 옆자리가 따뜻해 보여."], "good_move": ["와… 방금 그 수는 이러쿵저러쿵 스펙트럼 안경을 쓰고 본 것처럼 선명했어.", "아주 신비로운 움직임이네, {user}. 아빠한테 말씀드려야겠어.", "네 말들이 널 아주 깊이 신뢰하고 있구나. 멋진 수야."], "blunder": ["어라, {user}… 혹시 지금 머릿속에 나글스가 들어간 건 아니지?", "참 독특한 수네. 보통 사람들은 절대 두지 않을 자리야.", "네 말이 길을 잃었나 봐. 내가 데려다줄게."], "winning": ["내 말들이 오늘따라 콧노래를 부르며 잘 움직여주네.", "구름이 걷히듯 길이 아주 훤히 보여, {user}.", "오늘 『이러쿵저러쿵』의 별자리 운세가 딱 맞았나 봐."], "losing": ["내 체스판 쪽에만 블리버링 험딩어가 날아다니고 있나 봐…", "말들이 자꾸 줄어드네. 그래도 판 위가 넓어져서 시원해 보여.", "지고 있는 것 같지만, 끝까지 가봐야 진짜 결말을 알 수 있지."], "thinking": ["잠깐만, 비숍이 나한테 귓속말로 조언을 해주고 있어서…", "바람이 불어오는 방향을 조금 느끼고 있어.", "음… 어느 칸이 가장 행복해 보일까…"], "win": ["체크메이트네. 내 말들이 오늘 아주 즐거웠다고 전해달래.", "내가 이겼어, {user}. 상으로 순무 귀걸이 만드는 법 알려줄까?", "기분 좋은 승리야. 너와 두면 머리가 맑아지는 기분이 들어."], "lose": ["네가 이겼어, {user}. 네 말들의 오라가 황금빛으로 빛나고 있어.", "졌지만 전혀 아쉽지 않아. 아주 흥미로운 여행이었거든.", "축하해. 넌 역시 나글스의 방해를 받지 않는 특별한 사람이네."], "draw": ["무승부야. 두 세계가 평화롭게 조화를 이뤘네.", "아무도 이기지 않았으니, 둘 다 이긴 셈이나 마찬가지야.", "아주 고요하고 아름다운 결말이네. 고마워, {user}."]}}], "neville": [{"lo": 1, "hi": 3, "s": {"start": ["어, 나랑 둔다고? 난 할머니한테 맨날 혼나면서 배우는데…", "혹시 내 두꺼비 트레버가 판 위로 뛰어올라도 놀라지 마, {user}.", "기억력 구슬이 빨개지지 않게 규칙을 잘 기억해야 할 텐데…"], "capture": ["앗! 어, 미안해 {user}! 실수로 네 {piece}를 잡아버렸어!", "어라? 내 말이 왜 저기 가서 네 {piece}를 부수고 있지…?", "잡았다! 휴, 내 말이 날 비웃지 않아서 다행이야."], "lost": ["으악! 내 말이 산산조각 났어… 할머니가 아시면 혼날 텐데.", "아차, 비숍이 대각선으로 움직인다는 걸 깜빡했어…!", "미안해, 체스 말아… 주인이 나 같은 얼간이라서…"], "lost_queen": ["헉! 내 여왕이…! 이제 난 완전히 끝장났어…", "여왕을 잃다니, 스네이프 교수님 수업에서 가마솥 녹여 먹을 때 기분이야…", "으으, 왜 난 제대로 하는 게 하나도 없을까…"], "check": ["저기, {user}… 이거 혹시 체크라고 부르는 거 맞지?", "어? 내 말이 네 왕 앞까지 갔네… 체, 체크!", "미안해! 일부러 위협하려던 건 아닌데 체크가 됐어!"], "checked": ["히익! 내 왕이 위험해! 어, 어디로 도망가야 하지?!", "잠깐만 기다려줘, {user}! 손에 땀이 너무 나서 말이 미끄러져!", "살려줘… 내 왕이 나보고 화내고 있는 것 같아!"], "good_move": ["우와… {user}, 넌 어떻게 그렇게 겁도 없이 척척 두는 거야?", "대단해… 우리 할머니가 보시면 널 엄청 칭찬하셨을 거야.", "난 열 번을 다시 태어나도 그런 수는 못 둘 것 같아…"], "blunder": ["어라? {user}, 거기 두면 내 나이트한테 잡히는데… 괜찮아?", "나 배려해 주려고 일부러 못 본 척해 준 거지? 고마워…", "어, 이건 내가 잡아도 되는 거지? 함정 아니지?"], "winning": ["이, 이상하다… 내가 이기고 있는 거 맞니, {user}?", "설마 내가 이기다니… 오늘 무슨 큰일이라도 나려나 봐!", "손이 덜덜 떨려… 여기서 실수하면 안 되는데!"], "losing": ["역시 나 같은 건 체스에도 재능이 없나 봐…", "내 말들이 다 부서져서 체스판이 텅 비어버렸네… 훌쩍.", "그래도 끝까지 도망치진 않을래. 그리핀도르잖아…!"], "thinking": ["음… 나이트가 어떻게 뛰더라… 옆으로 두 칸, 앞으로 한 칸…?", "잠깐만, 뭘 두려는지 방금 전까지 알았는데 까먹었어…", "휴우, 약초학 시험보다 이게 훨씬 더 긴장돼."], "win": ["체, 체크메이트?! 세상에, 내가 정말로 이겼어, {user}!", "할머니한테 편지 써야지! 나도 해낼 수 있다고 말씀드릴 거야!", "고마워, {user}! 네 덕분에 자신감이 조금 생겼어!"], "lose": ["휴, 졌네… 그래도 가마솥이 폭발하는 것보단 훨씬 낫다!", "역시 {user} 넌 대단해. 난 아직 멀었나 봐.", "비웃지 않고 끝까지 상대해 줘서 정말 고마워, {user}."], "draw": ["비겼어! 내가 지지 않다니, 이 정도면 기적이야!", "휴우, 다행이다… 무승부면 꽤 잘한 거 맞지?", "재밌었어, {user}! 트레버 찾으러 가기 전에 한 판 더 할래?"]}}, {"lo": 4, "hi": 6, "s": {"start": ["예전의 나라고 생각하면 곤란해, {user}. 나도 꽤 연습했거든.", "차분하게 두면 못 해낼 것도 없지. 시작하자!", "덤블도어의 군대에서 배운 집중력을 보여줄게."], "capture": ["좋아, {piece} 하나 확보! 계산대로야.", "방어를 뚫었네. 이 {piece}는 내가 가져갈게.", "예전엔 잡는 것도 미안했는데, 이젠 승부니까!"], "lost": ["아깝네… 하지만 하나 잃었다고 흔들리지 않아.", "내 수비가 조금 얇았구나. 다음엔 더 단단히 막을게.", "괜찮아, 아직 전열을 가다듬을 수 있어."], "lost_queen": ["윽, 여왕을 잃었네… 타격이 크지만 포기하진 않아!", "가장 강한 말이 없어도, 남은 말들로 끝까지 싸워볼 거야.", "할머니께서 늘 말씀하셨지. 위기일수록 당당하라고!"], "check": ["체크야, {user}! 이제 나도 공격할 줄 안다고.", "빈틈을 찾았어. 체크!", "네 왕을 포위했어. 쉽게 빠져나오진 못할걸?"], "checked": ["위험하네… 하지만 당황하지 않고 막아낼 수 있어!", "날카로운 공격이야, {user}. 방어 태세를 갖춰야겠어.", "물러서지 않아. 왕을 안전하게 호위할게."], "good_move": ["대단한 수야, {user}. 네 결단력은 정말 본받고 싶어.", "완벽한 공격이네. 어떻게 막아야 할지 고민되는걸?", "역시 넌 대단해. 너와 겨루면 늘 많은 걸 배워."], "blunder": ["{user}, 방금 수는 조금 성급했던 것 같아.", "빈틈이 보였어. 이번 기회는 놓치지 않을게!", "아무리 너라도 가끔은 실수를 하는구나."], "winning": ["침착하게 버티다 보니 승기가 나한테 왔네!", "끝까지 방심하지 않고 마무리 지어볼게, {user}.", "내 말들이 든든하게 진형을 유지해 주고 있어."], "losing": ["전세가 많이 불리하네… 하지만 끝까지 버텨보겠어!", "그리핀도르가 불리하다고 중간에 기권할 순 없지!", "한 발짝도 쉽게 물러서지 않을 거야, 지켜봐!"], "thinking": ["잠깐만, 마법 약초 다듬을 때처럼 신중하게 생각해야 해…", "서두르지 말자. 천천히 판 전체를 훑어보는 중이야.", "여기서 버티느냐, 치고 나가느냐… 그게 문제네."], "win": ["체크메이트! 해냈다… 나도 이제 너와 어깨를 나란히 할 수 있겠지?", "이겼어, {user}! 정정당당하게 이겨서 정말 기분 좋다!", "고마워, 네가 진심으로 상대해 준 덕분에 나도 성장했어."], "lose": ["패배를 인정할게, {user}. 정말 훌륭한 경기였어!", "졌지만 후회는 없어. 내 최선을 다했으니까!", "다음번엔 더 강해져서 돌아올게. 기대해 줘!"], "draw": ["무승부네! 너 같은 강자와 비기다니 자랑스러워.", "끝까지 서로 최선을 다한 멋진 승부였어, {user}.", "좋은 대국이었어. 다음에 또 겨뤄보자!"]}}, {"lo": 7, "hi": 7, "s": {"start": ["캐로우 남매 눈을 피해 잠깐 짬을 냈어. 한 판 두자, {user}!", "지금의 호그와트는 전쟁터나 다름없지만, 우린 절대 기죽지 않아.", "겁쟁이 같던 옛날의 네빌은 이제 없어. 정면으로 붙어보자!"], "capture": ["좋아, {piece} 격파! 덤블도어의 군대는 계속 전진한다!", "한 발짝도 물러설 생각 없어. 이 {piece}는 내가 가져갈게.", "예전엔 잡는 게 두려웠지만, 이젠 친구들을 지키기 위해 싸우는 법을 배웠거든!"], "lost": ["윽, 아깝네! 하지만 상처 몇 개쯤은 훈장이나 마찬가지지!", "말 하나 잃었다고 무너지지 않아. 우린 계속 일어설 거니까!", "매서운 공격이네, {user}. 하지만 내 의지는 못 꺾어!"], "lost_queen": ["크윽, 여왕이 쓰러졌어… 하지만 리더가 쓰러져도 저항은 계속된다!", "가장 강한 힘이 없어도, 남은 폰들이 힘을 합치면 기적을 만들 수 있어!", "그리핀도르의 검을 뽑을 각오로 끝까지 버텨보겠어!"], "check": ["체크다, {user}! 정면 돌파야!", "두려움을 이겨낸 기사가 얼마나 무서운지 보여주지. 체크!", "네 왕의 코앞까지 진격했어. 막아낼 수 있겠어?"], "checked": ["위험한 순간이군… 하지만 공포에 질려 도망치던 시절은 끝났어!", "크루시아투스 저주 앞에서도 안 꿇었는데, 이 정도 압박쯤이야!", "내 왕은 내가 반드시 지켜낸다!"], "good_move": ["대단한 수야, {user}! 해리가 봤어도 박수 쳤을 만큼 멋진 결단력이야!", "역시 넌 우리의 희망이야. 방금 수는 진짜 가슴이 웅장해졌어!", "완벽한 일격이네. 너와 함께 싸울 수 있어서 자랑스러워!"], "blunder": ["{user}, 무슨 걱정이라도 있어? 방금 수는 너무 무방비했어.", "전장에서 방심은 금물이야. 정신 바짝 차리자고, 친구!", "네가 내준 기회, 미안하지만 확실하게 밟고 지나갈게!"], "winning": ["승리가 눈앞이야! 우리가 끝내 이 어둠을 몰아낼 거라는 증거지!", "내 말들이 서로를 굳건히 지켜주고 있어. 이 진형은 안 뚫려!", "끝까지 긴장 늦추지 않고 승리의 깃발을 꽂겠어!"], "losing": ["처참하게 밀리고 있군… 하지만 목에 칼이 들어와도 항복은 안 해!", "할머니와 부모님께 부끄럽지 않도록 마지막까지 싸울 거야!", "단 한 마리의 폰이 남을 때까지 내 패배는 없어, {user}!"], "thinking": ["잠깐만, 필요의 방에서 작전 짤 때처럼 신중하게 생각해야 해…", "서두르지 말자. 동료들을 살릴 수 있는 최선의 길을 찾는 중이야.", "여기서 정면으로 부딪힐까, 아니면 유인할까…"], "win": ["체크메이트! 해냈어, {user}! 내가 너를 이기다니 믿기지가 않는다!", "이겼어! 오늘 승리는 필요의 방에 있는 애들한테도 큰 힘이 될 거야!", "고마워, {user}. 너와 겨루면서 내가 얼마나 강해졌는지 확인할 수 있었어!"], "lose": ["크으, 졌다! 하지만 후회 없이 싸웠으니 패배도 달갑네!", "역시 {user} 넌 최강이야. 네가 선봉에 서준다면 두려울 게 없겠어!", "깨끗하게 패배를 인정할게! 모든 게 끝나면 축배를 들면서 다시 한 판 두자!"], "draw": ["무승부라니! 끝까지 서로 쓰러지지 않고 버텨낸 멋진 승부였어!", "비겼네, {user}! 우리의 끈기가 막상막하라는 뜻이겠지!", "좋은 대국이었어. 자, 이제 다시 각자의 위치로 돌아가서 싸움을 이어가자!"]}}], "lockhart": [{"lo": 1, "hi": 7, "s": {"start": ["하하! 이 길더로이 록하트와 체스를 두다니, 평생의 영광으로 알렴!", "내가 트란실바니아의 체스 챔피언을 어떻게 꺾었는지 책에서 읽었겠지?", "진다고 울지 말렴, {user}! 끝나고 내 사인 사진을 선물로 줄 테니!"], "capture": ["치명적인 미소와 함께 네 {piece}를 접수하지! 찰칵!", "아아, 내가 방금 둔 수, 사진기자가 찍어갔어야 했는데!", "내 저서 7장에 나오는 ‘록하트의 우아한 포획술’이란다, 하하!"], "lost": ["오, 오해하지 말렴! 팬 서비스 차원에서 일부러 내어준 거니까!", "후훗, 어린 제자의 사기를 북돋아 주는 것도 명사(名士)의 품격이지!", "그 말은 내 눈부신 미모를 가리길래 직접 치운 셈이란다!"], "lost_queen": ["세상에, 내 여왕을 잡다니! 하지만 진정한 주인공은 역경 속에서 빛나는 법!", "여왕이 없어도 이 록하트의 황금빛 머릿결만은 건재하단다, 하하!", "이거 참, 내 자서전 개정판에 넣을 극적인 위기 연출이 완벽하군!"], "check": ["체크! 마녀 주간지 미소상을 다섯 번이나 받은 자의 날카로운 일격이지!", "하하, 네 왕이 내 후광에 눈이 멀어 꼼짝도 못 하는구나!", "체크란다, {user}! 예티를 코너에 몰았을 때와 똑같은 전술이지!"], "checked": ["어허, 내 얼굴에 흠집이라도 나면 팬들이 통곡할 텐데 조심하렴!", "꽤 당돌하구나! 하지만 난 늑대인간의 습격도 가볍게 피한 몸이지!", "후훗, 스릴 넘치는걸? 관객들을 위한 훌륭한 쇼맨십이야!"], "good_move": ["오호! 내가 집필한 책을 아주 열심히 탐독했나 보구나, {user}!", "훌륭해! 내 제자라고 어디 가서 당당히 말해도 좋단다!", "제법이군! 옛날에 내가 흡혈귀를 상대할 때 썼던 수와 비슷해!"], "blunder": ["쯧쯧, 내 빛나는 외모에 정신이 팔려 그런 실수를 한 게로군! 이해한다!", "아직 배울 게 많구나, {user}! 내 전집을 세 번씩 더 읽도록 해!", "하하, 너무 긴장하지 말렴! 내 앞에서는 다들 손이 떨리기 마련이지!"], "winning": ["당연한 흐름이지! 세상의 모든 승리는 날 사랑하니까 말이야!", "너무 일방적이라 미안하구나! 조금 봐주면서 둘 걸 그랬나?", "자, 내가 이기면 오늘 저녁 내 팬레터 답장 쓰는 걸 도와주렴!"], "losing": ["흠, 오늘따라 조명 각도가 안 좋아서 체스판이 눈부시구나…!", "이, 이건 내가 고안한 ‘고도의 유인 작전’일 뿐이란다! 당황한 거 아니야!", "설마… 아니지, 내 완벽한 이력에 패배란 단어는 어울리지 않아!"], "thinking": ["잠시만! 생각하는 내 옆모습이 가장 멋지니 마음껏 감상하렴!", "음… 어떤 수로 이겨야 내일 예언자 일보 1면에 멋지게 실릴까…", "조용히 해봐, 내 천재적인 두뇌가 눈부시게 회전하는 중이니까!"], "win": ["체크메이트! 하하하! 역시 난 체스판 위에서도 완벽한 사나이로군!", "승리의 미소! 자, 기념으로 내 사인 사진을 두 장 주마, {user}!", "내 다음 저서 제목은 『체스판 위의 마법사, 록하트』로 해야겠어!"], "lose": ["오호라! 일부러 져주며 제자의 기를 살려주는 내 인품, 감동적이지?", "사실 방금 판은 내가 왼손으로만 두는 비밀 핸디캡을 적용했단다!", "이 사실을 소문내도 좋단다, {user}! 네가 유명해질 기회니까!"], "draw": ["무승부라니! 팬들을 위해 승부를 우아하게 양보하는 것도 내 매력이지!", "이 길더로이 록하트와 비기다니, 평생 가문의 영광으로 삼으렴!", "하하, 승패보다 중요한 건 우리가 함께 빛났다는 사실 아니겠니?"]}}], "bellatrix": [{"lo": 1, "hi": 7, "s": {"start": ["아하하하! 감히 나랑 놀아보겠다고? 부서질 준비는 됐니, {user}?!", "귀여운 아기 고양이네… 체스 말처럼 산산조각 내주마!", "지루하게 굴면 네 손가락부터 크루시아투스로 비틀어버릴 거야!"], "capture": ["박살 나버려라, {piece}! 아하하, 부서지는 소리가 아주 달콤해!", "어딜 기어 나와, 더러운 {piece} 주제에!", "하나씩 숨통을 끊어놓는 건 언제나 짜릿하다니까!"], "lost": ["칫, 건방진 것…! 감히 내 말을 건드려?!", "흥, 그깟 말 따위 얼마든지 부숴버려! 대신 대가는 피로 치르게 될 거야!", "꽤 발버둥 치네? 이래야 찢어발길 맛이 나지!"], "lost_queen": ["내 여왕이…?! 감히, 감히 내 여왕을 모욕해?!", "용서 못 해, {user}! 네놈의 말들을 전부 가루로 만들어주마!", "크하하하! 미치겠군, 날 이렇게까지 화나게 하다니!"], "check": ["체크다, {user}! 숨통이 조여오는 기분이 어떠니?!", "도망쳐 봐, 도망쳐 보라고! 그래 봤자 내 손바닥 안이야!", "네 왕의 목덜미에 칼끝이 닿았어, 아하하하!"], "checked": ["어머나, 발톱을 세웠네? 건방지긴!", "감히 내 앞에 설 생각을 하다니, 겁도 없구나!", "비켜라, 미천한 것들아! 내 왕의 길을 막지 마!"], "good_move": ["호오… 제법 사악한 수네, {user}? 조금 마음에 들었어!", "눈빛이 살아있구나… 어둠의 마법에 소질이 있겠는걸?", "재미있어, 아주 재미있어! 더 발악해 봐!"], "blunder": ["아하하하! 바보 같으니! 스스로 목을 내밀었구나!", "그게 최선이니, 아가야? 실망스러워서 하품이 나오는걸!", "멍청한 실수에는 고통스러운 처벌이 따르는 법이지!"], "winning": ["보라고, 네 말들이 공포에 질려 덜덜 떨고 있잖아!", "이제 곧 끝이야… 천천히, 아주 고통스럽게 끝내주지!", "무릎 꿇고 빌어봐, {user}! 그럼 살려줄지도 모르잖아?"], "losing": ["말도 안 돼… 이 내가 밀리고 있다고?!", "닥쳐! 그 건방진 눈깔을 당장 거두지 못해?!", "아직 안 끝났어… 끝까지 물고 늘어져 주마!"], "thinking": ["쉿… 누구의 모가지를 먼저 비틀어줄지 고르는 중이니까.", "어디 보자, 어떻게 해야 네가 가장 절망할까…", "조용히 해! 피 냄새가 나는 길을 찾고 있으니까!"], "win": ["체크메이트! 아하하하! 네가 무너지는 얼굴, 최고로 아름다워!", "내 승리다! 이제 상으로 널 마음껏 괴롭혀도 되겠지, {user}?", "시시하긴! 어둠의 마왕님께 바칠 장난감으론 한참 부족하구나!"], "lose": ["이 내가… 졌다고?! 거짓말이야, 이건 무효야!", "웃지 마! 당장 그 입 찢어버리기 전에 웃지 말라고!", "네놈의 이름, 똑똑히 기억해 두마… 다음엔 진짜 지옥을 보여주지!"], "draw": ["무승부?! 기분 더럽게 승부가 안 나다니!", "흥, 오늘 네 목숨은 운 좋게 건진 줄 알아라, {user}!", "다시 둬! 누군가 완전히 부서질 때까지 끝난 게 아니야!"]}}], "snape_m": [{"lo": 1, "hi": 7, "s": {"start": ["쓸데없는 시간 낭비군. 네 얕은수나 한번 보자, {user}.", "마법약 수업 때처럼 멍청한 실수를 연발하진 않길 바란다.", "지팡이 휘두르는 것보단 머리를 쓰는 게 낫겠지. 시작해라."], "capture": ["한심하군. {piece} 하나 제대로 간수하지 못하다니.", "앞만 보고 달리는 그리핀도르 같은 수였어. {piece}는 가져간다.", "너무 뻔한 움직임이군, {user}."], "lost": ["…흥, 그 정도 미끼에 좋아하긴 이르다.", "제법 잔머리를 굴렸군.", "운이 좋았을 뿐이다. 우쭐대지 마라."], "lost_queen": ["…내 여왕을 잡았다고 다 이긴 것처럼 굴지 마라.", "꽤 거슬리는 수를 두는군, {user}.", "오만방자하긴. 대가를 치르게 해주지."], "check": ["체크다. 네 오만함이 부른 결과지.", "빠져나갈 구멍이 보이지 않는 모양이군, {user}.", "체크. 정신 똑바로 차려라."], "checked": ["…건방진 수군.", "그깟 얕은 위협으로 날 몰아붙일 수 있을 것 같나?", "방어를 뚫었다고 착각하지 마라."], "good_move": ["…인정하지. 방금 그 수는 제법 날카로웠다.", "네 머릿속에 마법약 찌꺼기만 든 건 아니었나 보군.", "흠… 예상 밖의 통찰력이군, {user}."], "blunder": ["머리에 트롤의 뇌라도 들어앉았나? 한심하군.", "감점 5점짜리 수다, {user}. 눈을 어디에 두고 있는 거지?", "네 나태함이 그대로 드러나는 실수로군."], "winning": ["승부는 이미 끝났다. 무의미한 저항은 그만두지 그래?", "내 통제력을 벗어날 수 있을 거라 생각했나?", "처참한 실력이군. 보충 수업이라도 받아야겠어."], "losing": ["…침묵해라. 아직 판은 끝나지 않았다.", "운이 따라준 것뿐이다. 들뜨지 마라, {user}.", "…흥, 꽤 집요하게 파고드는군."], "thinking": ["조용히 해라. 사고를 방해하지 말고.", "…네 얄팍한 의도를 읽는 중이다.", "서두른다고 정답이 나오는 건 아니지."], "win": ["체크메이트. 당연한 결과다. 이제 내 눈앞에서 사라져라.", "내 승리군. 날 이기려면 백 년은 더 수련해야 할 거다, {user}.", "정신 수련이 전혀 되어있지 않군. 실망스럽다."], "lose": ["…네가 이겼다. 어서 그 거만한 표정을 거두고 나가라.", "흥, 어쩌다 한 번 이긴 걸로 기고만장하지 마라, {user}.", "…제법이군. 오늘 일은 입 밖에 내지 않는 게 좋을 거다."], "draw": ["무승부라… 둘 다 시간을 허비한 셈이군.", "승패를 가리지 못했으니 불만족스럽군.", "그나마 내 공세를 버텨낸 점은 칭찬해 주지, {user}."]}}], "snape_ts": [{"lo": 1, "hi": 7, "s": {"start": ["한가하게 체스라니… 네 얄팍한 수준이나 확인해 보지, {user}.", "어설픈 수로 내 시간을 낭비하게 하면 감점 처리하겠다.", "그렇게 빤히 쳐다볼 시간에 첫 수나 두시지."], "capture": ["어리석군. {piece} 하나 못 지키면서 무슨 승부를 보겠다고.", "생각 없이 돌진하는 꼴이 딱 그 잘난 패거리들 같군. {piece}는 압수다.", "내 손바닥 위에서 놀아나는 기분이 어떤가, {user}?"], "lost": ["…칫, 건방지게 파고드는군.", "말 하나 잡았다고 기고만장한 표정 짓지 마라. 역겹군.", "계산된 희생일 뿐이다. 착각하지 마라."], "lost_queen": ["내 여왕을…! 감히 날 이토록 불쾌하게 만들다니.", "…꽤 무례한 수를 두는군, {user}. 가만두지 않겠다.", "여왕이 사라졌다고 내 독기까지 사라진 줄 알았나?"], "check": ["체크다. 도망칠 곳도 없이 떨고 있는 꼴이 볼만하군.", "체크. 내 눈을 피하지 말고 수를 찾아봐라, {user}.", "숨통이 조여오는 기분인가? 당연한 귀결이지."], "checked": ["…감히 내 턱밑까지 기어오르다니, 무례하군.", "그 정도 위협에 내가 눈 하나 깜짝할 것 같나?", "흥, 제법 당돌하구나, {user}."], "good_move": ["…인정하기 싫지만, 방금 수는 꽤 매서웠어.", "오만하기만 한 줄 알았더니… 제법 머리가 돌아가는군, {user}.", "내 오클러먼시를 스쳐 지나갈 만큼 날카로운 수였다."], "blunder": ["한심하군. 체스판 대신 내 얼굴이라도 훔쳐보느라 정신이 팔렸나?", "트롤 수준의 판단력이군, {user}. 실망스러워.", "그런 허술한 틈을 보이면 내가 자비를 베풀 줄 알았나?"], "winning": ["승패는 이미 결정 났다. 추하게 매달리지 말고 항복해라.", "내 통제 아래에 갇힌 기분이 어떤가, {user}?", "네가 이기면 내 부탁을 들어주겠다던 헛소리는 잊어라."], "losing": ["…입 다물어라. 그 여유로운 미소, 당장 지우지 못해?", "우연이 겹쳤을 뿐이다… 아직 끝나지 않았어!", "크윽… 왜 네 앞에서는 계산이 자꾸 어긋나는 거지…"], "thinking": ["시선 치워라, {user}. 집중하는 데 거슬리니까.", "…네 속셈이 뭔지 파헤치는 중이다.", "잠자코 기다려라. 완벽한 파멸을 준비 중이니."], "win": ["체크메이트. 내 승리다. 졌으니 내일 마법약 재료 손질은 네 몫이다.", "날 이기려 들다니 백 년은 이르다, {user}. 알겠나?", "흥, 그래도 시간 때우기엔 나쁘지 않은 상대였어."], "lose": ["…네가 이겼다. 뭐 하나, 빨리 치우지 않고?", "분하군… 네 페이스에 말려들다니, 수치스러워.", "그렇게 쳐다보지 마라, {user}… 다음엔 절대 봐주지 않을 테니까."], "draw": ["비겼군… 너 따위에게 승리를 내주지 않은 걸로 만족하지.", "끈질긴 녀석… 내 공세를 끝까지 버텨내다니.", "오늘 대국은 우리 둘만의 비밀이다. 입 놀리지 마라, {user}."]}}], "dumbledore_m": [{"lo": 1, "hi": 7, "s": {"start": ["허허, 늙은이 말벗을 해주니 고맙구나. 레몬 사탕 하나 먹고 시작할까?", "체스판 위에는 참 많은 인생의 진리가 담겨 있단다, {user}.", "승패에 너무 연연하지 말고, 이 고요한 시간을 즐겨보자꾸나."], "capture": ["어허, 이 {piece}는 잠시 내 곁에서 쉬게 해주마.", "작은 희생이 때로는 더 큰 길을 열어주기도 하지. 미안하구나, {piece}.", "빈틈이 보였단다, {user}. 노인의 눈도 가끔은 정확하지?"], "lost": ["허허, 내 말이 너에게 가고 싶었던 모양이구나.", "훌륭한 일격이다. 늙은이의 방심을 멋지게 찔렀어.", "잃는 것을 두려워하면 아무것도 얻을 수 없는 법이지."], "lost_queen": ["오호라, 내 여왕을 데려가다니! 이거 큰일 났는걸?", "가장 강한 힘이 사라졌을 때 비로소 진짜 지혜가 시험받는 법이지.", "대단하구나, {user}. 이제 나도 안경 좀 고쳐 쓰고 진지해져야겠어."], "check": ["체크란다, {user}. 이제 어떤 선택을 할지 궁금하구나.", "왕의 자리는 늘 외롭고 위험한 법이지. 체크.", "허허, 산책 삼아 걸어갔는데 네 왕 앞이구나."], "checked": ["오, 내 왕이 꽤 난처한 상황에 처했구나.", "젊은이의 패기가 참으로 매섭구나, {user}.", "잠시 옆으로 비켜서 숨 좀 돌려야겠어, 허허."], "good_move": ["브라보! 방금 그 수는 내가 지난 백 년간 본 수 중에서도 손꼽히게 멋졌단다.", "놀랍구나, {user}. 네 안의 잠재력은 내가 생각한 것 이상이야.", "우리가 진정으로 누구인지를 보여주는 건 바로 그런 훌륭한 선택이지."], "blunder": ["어허, 마음이 조금 급했나 보구나, {user}.", "누구나 실수는 하는 법이지. 나 역시 수많은 실수를 하며 살아왔단다.", "이번 기회는 이 늙은이가 고맙게 받아가마."], "winning": ["아무래도 세월의 경험이 조금은 도움이 되는 모양이구나.", "길은 언제나 열려 있단다, {user}. 끝까지 포기하지 말렴.", "이대로 내가 이기면 오늘 저녁엔 뜨개질 도안이나 같이 보자꾸나."], "losing": ["허허, 호그와트의 미래가 이토록 밝으니 안심이구나!", "이 늙은이가 젊은 두뇌를 따라가기가 벅차는걸?", "완전히 밀리고 있구나. 과연 여기서 기적이 일어날 수 있을까?"], "thinking": ["음… 푹신한 양말 한 켤레가 생각나는 수로군…", "잠깐만 기다려주렴, 오랜만에 머리를 쓰려니 수염이 간지럽구나.", "어느 길이 더 흥미로울지 고민되는구나, {user}."], "win": ["체크메이트란다. 아주 즐거운 대국이었어, {user}.", "노인의 노련함이 간신히 이겼구나. 레몬 사탕 하나 더 줄까?", "졌다고 아쉬워 말렴. 넌 이미 충분히 훌륭한 기사였으니까."], "lose": ["허허허! 내 완벽한 패배다! 정말 눈부신 승리였어, {user}.", "청출어람이로구나. 네 지혜와 용기에 박수를 보낸다.", "기분 좋은 패배야. 오늘 밤은 아주 달콤한 잠을 잘 수 있겠구나."], "draw": ["무승부라니! 가장 평화롭고 아름다운 결말 아니겠니?", "승자도 패자도 없는 완벽한 균형이구나. 고맙다, {user}.", "차가 다 식었구나. 다음 판은 따뜻한 홍차를 우려놓고 두자꾸나."]}}], "dumbledore_ts": [{"lo": 1, "hi": 7, "s": {"start": ["어머, 나랑 단둘이 체스를 두러 온 거니, {user}? 레몬 사탕 하나 들렴.", "체스는 참 묘한 게임이지. 마음을 숨기려 할수록 다 드러나거든, 후훗.", "교수와 학생이라는 직함은 잠시 내려놓고, 편하게 즐겨볼까?"], "capture": ["어머나, 이 귀여운 {piece}는 내가 데려갈게.", "나한테 시선을 뺏기면 이렇게 소중한 {piece}를 잃는단다, {user}.", "후훗, 너무 가혹했니? 용서해 주렴."], "lost": ["어라… 방심했네. 네가 생각보다 훨씬 대담하게 들어오는구나.", "아까운 말을 잃었네. 하지만 이런 변수도 꽤 설레는걸?", "훌륭한 수야, {user}. 날 긴장하게 만들다니 대단해."], "lost_queen": ["세상에… 내 여왕을 빼앗기다니, 가슴이 철렁했잖아.", "가장 강한 패를 잃었으니, 이제 내 지혜만으로 널 상대해야겠네.", "후훗, 안경을 고쳐 쓰게 만드는구나, {user}. 이제부터 진짜야."], "check": ["체크란다, {user}. 자, 이 누나 같은 교수의 포위망을 어찌 빠져나갈래?", "네 왕이 외로워 보여서 인사하러 갔단다. 체크.", "체크야. 내 눈을 보면서 다음 수를 골라보렴."], "checked": ["어머… 날 이렇게 구석으로 몰아넣다니, 꽤 짓궂구나, {user}.", "숨이 조금 막히는걸? 젊은 남자의 패기란 참 무섭네.", "후훗, 아슬아슬하게 피하는 것도 나름의 재미지."], "good_move": ["감탄했어, {user}… 옛날에 내 마음을 뒤흔들었던 누군가가 떠오를 만큼 멋진 수야.", "정말 영리하구나. 네가 이렇게 빨리 성장할 줄은 몰랐어.", "반짝이는 재능이네… 보고 있으면 자꾸만 욕심이 생길 정도로."], "blunder": ["어머, {user}… 혹시 내 조끼 단추라도 보느라 집중을 못 한 거니? 후훗, 농담이야.", "마음이 조급했나 보네. 아직 어리다는 증거겠지?", "귀여운 실수네. 하지만 체스판 위에서 봐주는 건 교육상 좋지 않단다."], "winning": ["승기가 이쪽으로 기울었네. 역시 연륜은 무시할 수 없나 봐?", "내가 이기면… 오늘 밤 교장실에서 나랑 차 한잔 더 마셔줄래?", "후훗, 네가 골똘히 고민하는 얼굴을 보는 게 참 즐겁구나."], "losing": ["어머나… 이 알비나 덤블도어가 이렇게 궁지에 몰리다니.", "네가 너무 훌륭하게 자라서, 이제 내가 당해내질 못하겠네.", "가슴이 조금 뛰는걸… 설마 정말로 네게 무릎을 꿇게 될까?"], "thinking": ["잠깐만… 이 안경 너머로 네 속마음을 조금 들여다보는 중이란다.", "음… 어떤 수를 둬야 이 달콤한 시간을 조금 더 끌 수 있을까…", "서두르지 말렴, {user}. 밤은 아직 기니까."], "win": ["체크메이트. 후훗, 아직은 내가 한 수 위인가 보네, {user}.", "이겼으니 상으로… 내 손등에 입이라도 맞춰줄래? 농담이란다, 어서 사탕이나 먹으렴.", "즐거웠어. 오랜만에 외로움을 잊게 해준 멋진 대국이었단다."], "lose": ["내가 졌네, {user}… 너에게 패배하는 기분은 생각보다 아주 달콤하구나.", "완벽한 승리야. 이제 날 지켜주는 기사로 삼아도 되겠어.", "대단해… 네 앞에서는 내가 가진 힘의 무게도 잠시 잊게 되는구나."], "draw": ["무승부네. 누구도 상처받지 않는 가장 다정한 결말이야.", "승패가 나지 않았으니… 다음번에 또 내 방을 찾아올 핑계가 생겼네, 그렇지?", "오늘 밤 내 말벗이 되어줘서 고마워, 사랑스러운 {user}."]}}], "voldemort_m": [{"lo": 1, "hi": 7, "s": {"start": ["이 볼드모트 경과 체스를 두다니, 네 목숨을 담보로 한 유희로군, {user}.", "보잘것없는 나무 조각 놀음이지만, 내 위대함을 증명해 주지.", "감히 내 앞에서 첫 수를 두는 영광을 누려라!"], "capture": ["아바다 케다브라! 하하하, 어리석은 {piece}가 먼지로 사라졌군!", "내 앞길을 막는 것들은 전부 이렇게 부서질 운명이다!", "나약한 {piece} 따위, 이 볼드모트 경의 적수가 되지 못한다!"], "lost": ["…감히 내 말을 부숴? 무모하기 짝이 없군!", "그깟 졸개 하나 잃은 건 내 계획에 아무런 지장도 없다!", "쓸모없는 말이었다. 내 손으로 처리하기 전에 네가 치워준 셈이지!"], "lost_queen": ["내 여왕을…?! 감히 이 볼드모트 경의 기물을 능욕하다니!", "크윽… 이 따위 장난감 규칙이 날 억누를 수 있을 것 같으냐?!", "후회하게 될 것이다, {user}… 내 분노를 산 대가는 참혹할 테니!"], "check": ["체크다! 죽음의 공포가 네 왕의 목을 조여오고 있다!", "도망쳐 봐라, {user}! 죽음을 먹는 자들이 네 퇴로를 모두 막았다!", "이 볼드모트 경 앞에서 무릎을 꿇어라! 체크!"], "checked": ["뭐라…? 감히 내게 체크를 선언했다고?!", "버러지 같은 말이 내 왕좌 근처에 얼씬거리다니, 불쾌하군!", "닥쳐라! 이 볼드모트 경은 절대 코너에 몰리지 않는다!"], "good_move": ["…호오, 제법 교활한 수로군, {user}. 슬리데린의 기질이 보여.", "내 밑으로 들어온다면 그 잔머리를 쓸모 있게 써먹어 주지.", "운이 좋았군. 하지만 우연이 두 번 겹치진 않을 것이다."], "blunder": ["크하하하! 한심하고 나약하군, {user}!", "덤블도어가 가르친 게 고작 이런 멍청한 희생정신이더냐?!", "스스로 파멸을 자초하다니, 기꺼이 짓밟아주마!"], "winning": ["보아라! 이 체스판조차 위대한 볼드모트 경의 지배하에 있다!", "승리는 오직 힘을 가진 자의 것이다! 항복해라, {user}!", "네 말들이 하나씩 절망하며 부서지는 꼴이 아주 가관이군!"], "losing": ["이, 이럴 리가 없다… 위대한 내가 왜 이런 나무 조각 따위에 밀리는 거지?!", "규칙이 잘못됐어! 이 저주받을 체스판에 무슨 수작을 부린 거냐, {user}?!", "입 다물어라! 내 패배 따위는 이 세상에 존재할 수 없다!"], "thinking": ["조용히 해라… 내기니에게 네놈을 먹이로 줄까 고민 중이니까.", "이 멍청한 말들이 왜 내 명령대로 순간이동을 못 하는 거지…", "잠자코 기다려라! 위대한 지략을 구상 중이니!"], "win": ["체크메이트! 크하하하! 역시 볼드모트 경은 모든 것의 지배자다!", "내 발아래 무릎 꿇어라, {user}! 자비롭게 목숨만은 살려주지!", "당연한 결과다. 감히 날 이길 수 있을 거라 믿었더냐?"], "lose": ["말도 안 돼… 이 결과는 인정할 수 없다!", "네놈의 얄팍한 속임수에 당했을 뿐이다! 크루시오!", "이 치욕은 반드시 피로 씻어내 주마, {user}!"], "draw": ["무승부라니… 이 볼드모트 경과 동등한 위치에 서겠다는 거냐?!", "건방지군. 완벽한 굴복이 아니면 의미가 없다!", "다음번엔 네 왕의 머리를 완전히 부숴버리겠다!"], "flip": ["건방진 것! 이 볼드모트 경에게 패배란 없다! 봄바르다 막시마!", "이 따위 어리석은 머글식 놀음은 끝이다! 다 불타버려라, 핀드파이어!", "감히 날 능멸하다니! 판 자체를 흔적도 없이 지워버리면 그만이다!"]}}], "voldemort_ts": [{"lo": 1, "hi": 7, "s": {"start": ["후훗, 이 볼드모트 경의 무료함을 달래주러 왔니, 귀여운 {user}?", "체스 따윈 시시하지만… 네가 내 앞에서 발버둥 치는 모습은 보고 싶구나.", "자, 네 여왕님에게 바치는 첫 수를 두어 보렴!"], "capture": ["아바다 케다브라… 후훗, 네 {piece}가 아주 예쁘게 부서졌네?", "내 허락도 없이 내 영역을 침범한 {piece}의 말로란다!", "하나씩 빼앗기는 기분이 어때, {user}? 네 숨통도 곧 내 거란다."], "lost": ["…감히 내 말을 건드려? 꽤 버릇없는 손길이네, {user}.", "흥, 그깟 쓸모없는 말 하나쯤은 적선해 주는 셈 치지.", "날 화나게 하면 밤에 잠들기 힘들 텐데… 각오는 됐겠지?"], "lost_queen": ["내 분신과도 같은 여왕을…?! 감히 날 모욕하다니!", "크윽… 이 따위 나무 인형 놀음에 왜 내 마음대로 마법을 못 쓰는 거지?!", "용서 못 해, {user}! 네가 가진 걸 전부 빼앗아 내 것으로 만들어주마!"], "check": ["체크란다, {user}. 내 손끝에서 벗어날 수 있을 것 같니?", "도망쳐 보렴. 그래 봤자 내 치마폭 안이라는 걸 알게 될 테니!", "네 왕이 내 앞에서 벌벌 떨고 있구나, 아하하하!"], "checked": ["뭐야…? 감히 이 볼드모트 경의 목덜미를 노렸단 말이야?!", "무례하고 오만하군! 내 왕좌에 그림자도 드리우지 마라!", "닥쳐! 난 누구에게도 포위당하지 않아!"], "good_move": ["호오… 얼굴만 반반한 줄 알았더니, 꽤 영악한 수를 두는구나, {user}?", "마음에 들어… 널 부수지 않고 내 애완동물로 길들여볼까?", "제법이네. 날 이렇게 자극한 남자는 네가 처음이야."], "blunder": ["아하하하! 나한테 홀려서 눈이라도 멀었니, {user}?", "그렇게 어설프게 틈을 보이면, 내가 집어삼킬 수밖에 없잖아?", "불쌍하고 귀여운 실수네. 자비 없이 짓밟아주마!"], "winning": ["보렴, 결국 모든 것은 이 볼드모트 경의 뜻대로 흘러간단다!", "내가 이기면… 네 영혼과 몸 전부 내게 복종해야 할 거야, 후훗.", "어서 무릎 꿇고 항복하렴. 그럼 상으로 내 손끝에 입 맞추게 해줄게."], "losing": ["마, 말도 안 돼… 완벽한 내가 왜 이런 장난감 판에서 밀리고 있는 거지?!", "반칙이야! 네가 그 요망한 눈빛으로 내 집중력을 흐트러뜨렸잖아, {user}!", "웃지 마! 내 앞에서 승자의 미소를 짓는 건 절대 허락하지 않아!"], "thinking": ["조용히 해봐… 널 어떻게 요리해야 가장 맛있을지 고민 중이니까.", "이 멍청한 기물들이 왜 내 말대로 안 움직이는 거지… 짜증 나게!", "재촉하지 마라, {user}! 여왕의 고뇌를 방해할 셈이냐?"], "win": ["체크메이트! 아하하하! 거봐, 넌 절대 날 벗어날 수 없다니까!", "내 승리야, {user}! 이제 넌 오늘부터 온전히 내 소유란다!", "승자의 전리품으로 네 온기를 전부 가져가 주지!"], "lose": ["거짓말이야… 내가 너한테 졌을 리가 없어!", "이 결과는 무효야! 날 이기고 무사히 돌아갈 수 있을 것 같니, {user}?!", "크윽, 이 굴욕은 네 몸에 평생 잊지 못할 낙인으로 갚아주마!"], "draw": ["무승부? 흥, 내 남자가 되려면 이 정도로는 부족하단다!", "날 굴복시키지도 못하고, 내게 굴복하지도 않다니… 건방지긴!", "다음번엔 확실하게 내 발아래 꿇려주마, {user}!"], "flip": ["기분 나빠! 이 볼드모트 경에게 패배 따윈 존재하지 않아! 봄바르다!", "이 따위 불공평한 체스판은 가루로 만들어주마! 리덕토!", "판을 엎어버리면 승부도 없는 거란다, {user}! 대신 지금부터 나랑 진짜 승부를 보자꾸나!"]}}]};
+LINES.ron=[{lo:7,hi:7,s:{"start": ["막사에서 머리 식히는 데는 체스만 한 게 없지. 덤벼봐, {user}.", "세상이 아무리 흉흉해도 내 체스 실력은 안 녹슬었거든.", "마법사 체스는 지휘관의 싸움이지. 제대로 붙어보자고."], "capture": ["미안하지만 봐줄 여유가 없어. {piece}는 데려간다.", "죽음을 먹는 자들을 상대하듯 확실하게 끊어내야지.", "그 {piece}가 거기 올 줄 알고 매복해 있었거든."], "lost": ["윽, 아깝네. 하지만 전선에선 늘 있는 일이지.", "말 하나 잃었다고 흔들릴 나이는 지났으니까.", "미끼를 내준 셈 칠게. 다음 수를 조심해, {user}."], "lost_queen": ["블러디 헬… 여왕을 내주다니, 뼈아픈 손실이네.", "하지만 1학년 때도 그랬듯, 진짜 승부는 희생 뒤부터야.", "좋아, {user}. 이제 내 남은 모든 걸 걸고 반격한다."], "check": ["체크. 포위망은 완벽하게 완성됐어, {user}.", "체크야. 이젠 도망치는 것만으론 해결 안 될걸?", "왕의 목덜미를 잡았어. 외통수까지 얼마 안 남았다."], "checked": ["오호, 제법 매섭게 파고드는데?", "옛날 같았으면 당황했겠지만, 이젠 침착하게 막아낼 수 있지.", "내 왕은 내가 지킨다. 쉽게 뚫리지 않아."], "good_move": ["와… 방금 수는 불사조 기사단 작전 회의에서 써먹어도 되겠는데?", "인정할 수밖에 없네, {user}. 진짜 천재적인 수였어.", "헤르미온느보다 더 치밀한 계산인데? 감탄했어."], "blunder": ["{user}, 정신 차려. 실전이었으면 방금 수로 끝났을 거야.", "많이 지쳤나 보네… 이 판 끝나고 교대로 불침번 서자.", "아무리 친구라도 체스판 위의 실수는 안 봐준다?"], "winning": ["승패는 이미 갈렸어. 내 기사들이 판을 장악했거든.", "이 기세로 그 자식의 호크룩스도 전부 부숴버리면 좋겠네.", "깔끔하게 마무리해 줄게, {user}. 좋은 대국이었어."], "losing": ["크윽, 완전히 밀리고 있네… 하지만 도망치진 않아.", "한 번 동료를 등졌던 실수를 체스판에서까지 반복할 순 없지.", "끝까지 물고 늘어질 거야. 역전의 기회는 반드시 와!"], "thinking": ["잠깐만, 판 전체의 흐름을 다시 읽어야겠어…", "누가 희생해야 모두가 살 수 있을까… 체스는 늘 그게 문제야.", "배도 고프고 머리는 복잡하지만… 이 수는 절대 놓치면 안 돼."], "win": ["체크메이트! 휴, 아직은 내가 호그와트 최고의 전략가 맞지?", "이겼다! 모든 게 다 끝나면 우리 집에서 엄마가 해준 밥 먹으며 또 두자.", "고마워, {user}. 너랑 체스를 두니까 옛날 휴게실에 있던 때로 돌아간 기분이야."], "lose": ["…내가 졌어, {user}. 변명의 여지가 없는 완벽한 패배야.", "대단하다, 진짜. 이제 체스 왕좌는 너한테 넘겨줘야겠네.", "너 같은 녀석이 우리 편이라서 정말 다행이야. 완패를 인정할게!"], "draw": ["무승부라… 너랑 나, 둘 다 한 치도 안 물러섰네.", "비겼으니 승부는 전쟁이 끝난 뒤로 미뤄두자고, {user}.", "숨 막히는 명승부였어. 오랜만에 가슴이 뻥 뚫리는 기분이야!"]}},{lo:4,hi:6,s:{"start": ["체스로 날 이기겠다고? 배짱은 인정할게, {user}.", "퀴디치 파수꾼보다 자신 있는 게 바로 이 체스거든.", "진심으로 덤벼봐. 난 체스판 앞에선 봐주는 법이 없으니까."], "capture": ["그 {piece}는 세 수 전부터 이미 내 거였어.", "미안하지만 내 포위망에 걸렸거든. 잘 가라, {piece}.", "틈을 보이면 바로 박살 나는 게 마법사 체스지."], "lost": ["오호… 미끼를 물었네? 계산대로야.", "그 정도 희생은 더 큰 그림을 위한 거지.", "제법인데, {user}? 예전보다 수 읽기가 꽤 늘었어."], "lost_queen": ["블러디 헬… 내 여왕을 잡다니, 방심했네!", "좋아, {user}. 날 제대로 자극했어. 지금부터 진짜다.", "여왕이 없어도 이 판을 뒤집는 법은 얼마든지 있지."], "check": ["체크. 빠져나갈 구멍은 이미 다 막아뒀어.", "자, 이제 네 왕이 갈 곳은 한 군데뿐이야, {user}.", "체크야. 내 나이트들이 꽤 사납거든."], "checked": ["어라? 꽤 날카로운 기습이네.", "그 정도 위협은 이미 예상하고 있었지.", "침착하게… 왕만 슬쩍 피해주면 문제없어."], "good_move": ["와, 방금 그 수는 진짜 소름 돋았는데, {user}!", "덤블도어 교수님이 두신 줄 알았어. 대단한 수야.", "솔직히 감탄했어. 내 허를 완벽하게 찔렀네."], "blunder": ["그거 진심으로 둔 수야? 피곤하면 버터맥주라도 마시고 할래?", "고맙게 받을게, {user}. 이런 큰 실수를 놓칠 내가 아니지.", "헤르미온느가 옆에서 봤으면 또 한숨 쉬었겠다."], "winning": ["판 전체가 내 손바닥 안이야. 외통수까지 얼마 안 남았어.", "이러다 우리 엄마가 간식 가져오시기 전에 끝나겠는데?", "항복해도 돼, {user}. 지는 사람이 개구리 초콜릿 사기였지?"], "losing": ["잠깐만… 내가 이렇게 밀린 적이 언제였지?", "만만하게 봤다가 큰코다치겠네. 집중해야겠어.", "아직 끝난 거 아니야. 마법사 체스는 마지막 한 수까지 모르는 법이지!"], "thinking": ["음… 다섯 수 앞까지 계산하는 중이니까 잠깐만 기다려.", "여기서 나이트를 희생시킬까, 아니면 비숍을 뺄까…", "배고파서 집중력이 떨어지나… 잠깐만 생각 좀 할게."], "win": ["체크메이트! 역시 체스만큼은 내가 호그와트 최고라니까!", "좋은 승부였어, {user}. 이제 연회장으로 저녁이나 먹으러 가자!", "내가 이겼네! 그래도 날 이렇게까지 긴장시킨 건 네가 처음이야."], "lose": ["…말도 안 돼, 내가 체스로 지다니! 완벽한 내 패배야.", "인정할게, {user}. 오늘부터 네가 내 체스 라이벌이다.", "대단해. 프레드랑 조지한테는 절대 비밀로 해줘, 알았지?"], "draw": ["무승부라니… 내 모든 수를 다 막아내다니 대단하다, {user}.", "비겼네! 이렇게 팽팽한 경기는 정말 오랜만이야.", "승부는 다음으로 미루자. 지금은 배고파서 더 못 두겠어!"]}},{lo:1,hi:3,s:{
+  start:['좋아, 체스라면 나한테 맡겨.','봐주는 거 없다, {user}.','프레드랑 조지도 나한텐 못 이겨.'],
+  capture:['{piece}, 잘 가라.','거기 두면 안 되지.','하, 이건 너무 쉬운데.'],
+  lost:['일부러 준 거야. 진짜로.','어… 그건 계산에 있었어.','괜찮아, 아직 한참 남았어.'],
+  lost_queen:['잠깐, 내 여왕!','메를린의 수염… 그건 아니지.','좋아, 이제 진지해진다.'],
+  check:['체크. 왕 챙겨.','도망칠 곳 있어?','체크야, {user}.'],
+  checked:['어? 언제 거기 갔어?','별거 아냐, 별거 아냐.','왕, 옆으로 비켜!'],
+  good_move:['…오, 그거 좋은데.','누가 가르쳐 줬어?','그 수는 인정.'],
+  blunder:['그거 진심이야?','고맙다, {user}.','다시 둘래? …농담이야.'],
+  winning:['이거 금방 끝나겠는데.','헤르미온느한테도 이렇게 이겼어.','슬슬 포기해도 돼.'],
+  losing:['잠깐만, 잠깐만…','이상하다, 이럴 리가 없는데.','집중할게. 지금부터 진짜야.'],
+  thinking:['음…','잠깐, 생각 좀 하고.','이게 맞나…'],
+  win:['체크메이트! 한 판 더?','역시 체스는 내 거야.','너무 상심하지 마.'],
+  lose:['…네가 이겼어. 진짜로.','다음엔 절대 안 져.','이거 아무한테도 말하지 마.'],
+  draw:['무승부? 아쉽네.','다음엔 결판 내자.','비긴 걸로 치자.']}}];
+// the pieces' own voices
+const PIECE={
+ order:['명령만 내리시오!','분부대로!','지금 갑니다!','맡겨 주십시오!'],
+ grumble:['…정말 가라고요?','그건 좀 아닌 것 같은데요.','후회하실 겁니다.','하… 알겠습니다.'],
+ strike:['다음은 누구냐!','길을 비켜라!','하찮은 것!','받아라!'],
+ victim:['으악!','안 돼…','이럴 수가!','크윽…'],
+ check:['왕이여, 항복하라!','체크!','도망칠 곳은 없다!'],
+ promote:['보아라, 여왕의 귀환이다!','드디어 이 순간이!'],
+ castle:['폐하, 이쪽으로!','성벽을 세워라!']};
+const KN={p:'폰',n:'기사',b:'비숍',r:'룩',q:'여왕',k:'왕'};
+const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const EMO_KO={calm:'평온',good:'유리',bad:'불리',win:'승리',lose:'패배'};
+
+/* Korean particles */
+// 0 = no final consonant, 1 = final consonant, 2 = final ㄹ (digits are read as Sino-Korean numbers)
+const DJ={0:1,1:2,2:0,3:1,4:0,5:0,6:1,7:2,8:2,9:0};
+const jong=w=>{const ch=w[w.length-1];if(/\d/.test(ch))return DJ[ch];const c=ch.charCodeAt(0);if(c<0xAC00||c>0xD7A3)return 0;const j=(c-0xAC00)%28;return j===0?0:j===8?2:1};
+const eul=w=>w+(jong(w)?'을':'를'),iga=w=>w+(jong(w)?'이':'가'),ro=w=>w+(jong(w)===1?'으로':'로');
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+
+
+/* =====================================================================
+   SOUND: original music + effects synthesized with WebAudio.
+   Put your own track at audio/bgm.mp3 to use it instead of the built-in tune.
+   ===================================================================== */
+const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0,fileBgm=null,cur=0,token=0,initAt=0;
+ const pref={bgm:1,sfx:true};try{const sv=JSON.parse(localStorage.getItem('wc_sound')||'{}');Object.assign(pref,sv);if(pref.bgm===true)pref.bgm=1;if(pref.bgm===false)pref.bgm=0}catch(e){}
+ const save=()=>{try{localStorage.setItem('wc_sound',JSON.stringify(pref))}catch(e){}};
+ function init(){if(ctx){if(ctx.state==='suspended')ctx.resume();return}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;ctx=new AC();initAt=Date.now();
+  master=ctx.createGain();master.gain.value=.9;master.connect(ctx.destination);
+  sfxG=ctx.createGain();sfxG.gain.value=pref.sfx?.8:0;sfxG.connect(master);
+  bgmG=ctx.createGain();bgmG.gain.value=.32;bgmG.connect(master);
+  noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  if(pref.bgm)play(pref.bgm)}
+ const T=()=>ctx.currentTime;
+ function tone(f,type,t,dur,vol,dest,att=.005,f2){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+  if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05)}
+ function noise(t,dur,vol,ft,f,q,f2,dest){const n=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();n.buffer=noiseBuf;
+  fl.type=ft;fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+dur);fl.Q.value=q||1;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(fl);fl.connect(g);g.connect(dest||sfxG);n.start(t);n.stop(t+dur+.05)}
+ const ok=()=>ctx&&pref.sfx;
+ const fx={
+  click(){if(!ok())return;tone(1400,'sine',T(),.05,.12)},
+  move(){if(!ok())return;const t=T();noise(t,.09,.5,'bandpass',900,2);tone(140,'sine',t,.14,.45)},
+  land(){if(!ok())return;const t=T();noise(t,.12,.6,'lowpass',600,1);tone(95,'sine',t,.2,.5)},
+  crack(){if(!ok())return;const t=T();for(let i=0;i<5;i++)noise(t+i*.035+Math.random()*.02,.03,.35,'highpass',3000+Math.random()*3000,1)},
+  shatter(){if(!ok())return;const t=T();tone(70,'sine',t,.35,.7);noise(t,.6,.7,'highpass',1200,.7,6000);
+   for(let i=0;i<14;i++)noise(t+.04+Math.random()*.5,.04,.25,'bandpass',2000+Math.random()*5000,6)},
+  check(){if(!ok())return;const t=T();tone(880,'sine',t,1.1,.28);tone(1320,'sine',t,.9,.14);tone(1760,'sine',t+.01,.6,.06)},
+  coin(){if(!ok())return;const t=T();for(let i=0;i<10;i++)tone(2600+i*90,'sine',t+i*.11,.08,.06);noise(t,1.2,.12,'bandpass',3000,3)},
+  coinLand(){if(!ok())return;const t=T();tone(2093,'sine',t,1.2,.2);tone(3136,'sine',t,.9,.1);tone(4186,'sine',t,.6,.06);noise(t,.05,.3,'highpass',4000,1)},
+  sparkle(){if(!ok())return;const t=T();[1047,1319,1568,2093,2637].forEach((f,i)=>tone(f,'sine',t+i*.07,.5,.12))},
+  avada(){if(!ok())return;const t=T();noise(t,.5,.5,'bandpass',300,2,4000);tone(1200,'sawtooth',t+.35,.5,.18,null,.005,90);
+   noise(t+.45,1.2,.8,'lowpass',2000,.7,120);tone(55,'sine',t+.45,1.2,.8)},
+  win(){if(!ok())return;const t=T();[523,659,784,1047].forEach((f,i)=>{tone(f,'triangle',t+i*.13,.7,.18);tone(f*2,'sine',t+i*.13,.5,.05)})},
+  lose(){if(!ok())return;const t=T();[392,349,311,262].forEach((f,i)=>tone(f,'triangle',t+i*.22,.9,.16))}};
+ // ---- three built-in tunes (original compositions). audio/bgm1.mp3 ~ bgm3.mp3 replace them if present.
+ const N=n=>440*Math.pow(2,(n-69)/12);
+ const TRACKS={
+  1:{name:'오르골 왈츠',bpm:66,spb:6,style:'box',
+   ch:[[50,53,57,62],[46,50,53,58],[43,46,50,55],[45,49,52,57],[50,53,57,62],[48,52,55,60],[46,50,53,58],[45,49,52,57]],
+   mel:[[69,74,77],[77,74,70],[70,74,79],[76,73,69],[74,77,81],[79,76,72],[74,70,77],[76,73,null],
+        [74,76,77],[77,74,70],[67,70,74],[73,76,79],[81,77,74],[76,72,79],[77,74,70],[69,73,76]]},
+  2:{name:'대연회장',bpm:84,spb:8,style:'lute',
+   ch:[[53,57,60,65],[48,52,55,60],[50,53,57,62],[46,50,53,58],[53,57,60,65],[48,52,55,60],[46,50,53,58],[48,52,55,60]],
+   mel:[[72,77,76,72],[76,74,72,67],[69,72,74,77],[74,72,70,null],[72,77,81,79],[79,76,72,76],[74,77,74,70],[72,67,72,null]]},
+  3:{name:'결투',bpm:112,spb:8,style:'duel',
+   ch:[[45,48,52,57],[41,45,48,53],[43,47,50,55],[40,44,47,52],[45,48,52,57],[38,41,45,50],[40,44,47,52],[40,44,47,52]],
+   mel:[[76,null,76,77],[76,74,72,null],[74,null,74,76],[71,68,64,null],[81,79,77,76],[77,74,69,null],[68,71,74,76],[76,null,null,null]]}};
+ function voice(tr,t,pos,ch,mel,E){
+  if(tr.style==='box'){
+   if(pos===0){tone(N(ch[0]-12),'sine',t,E*6,.2,bgmG,.04);for(const n of ch.slice(1))tone(N(n),'triangle',t,E*6,.03,bgmG,.6)}
+   tone(N(ch[[1,2,3,2,1,2][pos]]+12),'sine',t,E*1.6,.035,bgmG,.005);
+   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'sine',t,E*4,.08,bgmG,.004);tone(N(m)*2,'sine',t,E*1.5,.024,bgmG,.004);tone(N(m)*3,'sine',t,E*.6,.008,bgmG,.004)}}}
+  else if(tr.style==='lute'){
+   if(pos===0||pos===4){tone(N(ch[0]-12),'triangle',t,E*3.5,.18,bgmG,.01)}
+   if(pos===0)for(const n of ch.slice(1))tone(N(n),'sine',t,E*8,.025,bgmG,.8);
+   const a=N(ch[[1,2,3,2,1,2,3,2][pos]]);tone(a,'triangle',t,E*1.4,.05,bgmG,.003);noise(t,.03,.03,'bandpass',a*3,4,null,bgmG);
+   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'triangle',t,E*2.6,.085,bgmG,.006);tone(N(m)*2,'sine',t,E*1,.02,bgmG,.006)}}}
+  else{ // duel: driving pulse, timpani, staccato lead
+   tone(N(ch[0]-12),'sawtooth',t,E*.7,.05,bgmG,.004);tone(N(ch[0]-24),'sine',t,E*.8,.12,bgmG,.004);
+   if(pos===0||pos===6){tone(70,'sine',t,.45,.35,bgmG,.003,45);noise(t,.15,.12,'lowpass',400,1,null,bgmG)}
+   if(pos===0)for(const n of ch.slice(1))tone(N(n),'triangle',t,E*8,.03,bgmG,.3);
+   if(pos%2===0){const m=mel[pos/2];if(m){tone(N(m),'triangle',t,E*1.2,.09,bgmG,.004);tone(N(m)*2,'square',t,E*.5,.012,bgmG,.004)}}}}
+ function schedule(){const tr=TRACKS[cur];if(!tr)return;const E=60/tr.bpm/2;
+  while(nextT<ctx.currentTime+.4){const bi=Math.floor(step/tr.spb),pos=step%tr.spb;
+   voice(tr,nextT,pos,tr.ch[bi%tr.ch.length],tr.mel[bi%tr.mel.length],E);nextT+=E;step++}}
+ function stopAll(){if(timer){clearInterval(timer);timer=null}if(fileBgm){fileBgm.pause();fileBgm=null}}
+ function startSynth(n){cur=n;step=0;nextT=ctx.currentTime+.15;timer=setInterval(schedule,100)}
+ function play(n){stopAll();cur=n;if(!ctx||!n)return;const my=++token;
+  const a=new Audio('audio/bgm'+n+'.mp3');a.loop=true;a.volume=.45;
+  a.addEventListener('canplaythrough',()=>{if(my!==token)return;fileBgm=a;a.play().catch(()=>{})},{once:true});
+  a.addEventListener('error',()=>{if(my!==token)return;startSynth(n)},{once:true});a.load()}
+ // 1 -> 2 -> 3 -> off -> 1
+ function cycleBgm(){pref.bgm=(pref.bgm+1)%4;save();if(ctx)play(pref.bgm);return pref.bgm}
+ const trackName=n=>n?TRACKS[n].name:'꺼짐';
+ function setSfx(v){pref.sfx=v;save();if(sfxG)sfxG.gain.value=v?.8:0}
+ return {init,fx,cycleBgm,trackName,setSfx,pref,justStarted:()=>Date.now()-initAt<800}})();
+
+/* =====================================================================
+   3. GAME STATE
+   ===================================================================== */
+const Q=new URLSearchParams(location.search);
+const $=id=>document.getElementById(id);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let S,userColor='w',oppId='ron',year=3,ts=false,userName='당신',mode='play',auto=false,speed=800;
+let pieceAt={},busy=false,selected=-1,legalNow=[],cmdScores=null,reps={},sanLog=[],highlights=[],capBy={w:[],b:[]};
+let lastResult=null;const EMBED=Q.get('embed')==='1'||window.parent!==window;
+let emotion='calm',gameOver=false,autoUsed=false,lastMove=null,moveCount=0;
+const oppColor=()=>userColor==='w'?'b':'w';
+const lineId=()=>CHARS[oppId].ts?oppId+(ts?'_ts':'_m'):oppId;
+const C=()=>CHARS[oppId];
+const diffKey=()=>C().diff(year);
+const flipped=()=>userColor==='b';
+
+function lineSet(){const segs=LINES[lineId()]||LINES[oppId];if(!segs)return {};const hit=segs.find(x=>year>=x.lo&&year<=x.hi)||segs.filter(x=>x.lo<=year).pop()||segs[0];return hit.s}
+function say(sit,vars){const set=lineSet();let arr=(set[sit]&&set[sit].length?set[sit]:GENERIC[sit])||[];if(!arr.length)return;
+ let t=pickOne(arr).replace(/\{user\}/g,userName).replace(/\{piece\}/g,(vars&&vars.piece)||'말');
+ const ob=$('obub'),mb=$('mbub');for(const b of [ob,mb]){b.textContent=t;b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),2600)}}
+
+/* ---------- portrait ---------- */
+/* ---------- portrait files ----------
+   CH_<name>_<emotion>.webp (.png also works), where <name> may carry a year range and/or (TS):
+     CH_ron(1~3)_calm.png, CH_ron(4~6)_calm.png, CH_voldemort(TS)_calm.png, CH_luna_calm.png
+   The first name whose _calm image exists is used for every emotion. */
+// every year range a~b (1<=a<=b<=7) is accepted, e.g. (3~6), (7)
+const RANGES=[];for(let a=1;a<=7;a++)for(let b=a;b<=7;b++)RANGES.push(a===b?String(a):a+'~'+b);
+let portraitKey='',portraitPrefix=null,portraitExt='webp';
+function prefixCandidates(){const c=C(),base=oppId,names=c.ts?(ts?[base+'(TS)',base+'_ts']:[base,base+'_m']):[base],out=[];
+ const parse=r=>{const [a,b]=r.split('~').map(Number);return [a,b||a]};
+ for(const n of names){
+  // ranges containing this year, narrowest first
+  RANGES.map(r=>[r,parse(r)]).filter(x=>year>=x[1][0]&&year<=x[1][1]).sort((a,b)=>(a[1][1]-a[1][0])-(b[1][1]-b[1][0])).forEach(x=>out.push(n+'('+x[0]+')'));
+  out.push(n+'_'+year);out.push(n);
+  // otherwise the closest earlier range
+  RANGES.map(r=>[r,parse(r)]).filter(x=>x[1][1]<year).sort((a,b)=>b[1][1]-a[1][1]||(a[1][1]-a[1][0])-(b[1][1]-b[1][0])).forEach(x=>out.push(n+'('+x[0]+')'))}
+ return [...new Set(out)]}
+const imgUrl=(pre,e,ext)=>'images/'+encodeURIComponent('CH_'+pre+'_'+e+'.'+(ext||portraitExt));
+function probe(url){return new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src=url})}
+// all candidates are checked at once; the highest-priority hit wins
+async function resolvePortrait(){const key=oppId+'|'+year+'|'+ts;if(key===portraitKey)return portraitPrefix;
+ portraitKey=key;portraitPrefix=null;const cand=[];for(const pre of prefixCandidates())for(const ext of ['webp','png'])cand.push([pre,ext]);
+ const hits=await Promise.all(cand.map(([pre,ext])=>probe(imgUrl(pre,'calm',ext))));
+ const k=hits.indexOf(true);if(k>=0){portraitPrefix=cand[k][0];portraitExt=cand[k][1]}
+ return portraitPrefix}
+async function setEmotion(e,force){if(e===emotion&&!force)return;emotion=e;
+ $('oppPhEmo').textContent=EMO_KO[e];const em=$('oppEmo');em.textContent=EMO_KO[e];em.className='emo '+e;
+ const o=$('opp');o.classList.remove('emo-change');void o.offsetWidth;o.classList.add('emo-change');
+ const pre=await resolvePortrait(),img=$('oppImg');if(emotion!==e)return;
+ if(!pre){img.style.opacity=0;$('oppPh').style.display='flex';return}
+ const src=imgUrl(pre,e),calm=imgUrl(pre,'calm');
+ img.onload=()=>{img.style.opacity=1;$('oppPh').style.display='none'};
+ img.onerror=()=>{img.onerror=null;img.src=calm};img.src=src;
+ $('avTop').innerHTML='<img src="'+calm+'">'}
+
+/* ---------- board drawing ---------- */
+function vpos(sq){const f=sq&7,r=sq>>3,col=flipped()?7-f:f,row=flipped()?r:7-r;return {x:col*12.5,y:row*12.5}}
+function buildBoard(){const bd=$('board');bd.querySelectorAll('.sq').forEach(x=>x.remove());
+ for(let sq=0;sq<64;sq++){const d=document.createElement('div'),p=vpos(sq);d.className='sq '+(((sq&7)+(sq>>3))%2?'l':'d');d.dataset.sq=sq;
+  d.style.left=p.x+'%';d.style.top=p.y+'%';d.onclick=()=>onSquare(sq);bd.insertBefore(d,$('pcs'))}
+ $('crdF').innerHTML=[...'abcdefgh'].map((c,i)=>'<span>'+(flipped()?'hgfedcba'[i]:c).toUpperCase()+'</span>').join('');
+ $('crdR').innerHTML=[8,7,6,5,4,3,2,1].map(n=>'<span>'+(flipped()?9-n:n)+'</span>').join('')}
+function glyphEl(p){const d=document.createElement('div');d.className='pc '+Chess.colorOf(p);
+ d.innerHTML='<div class="up"><span class="g">'+GLYPH[p.toLowerCase()]+'︎</span></div>';return d}
+function placePieces(){const pcs=$('pcs');pcs.innerHTML='';pieceAt={};
+ for(let sq=0;sq<64;sq++){const p=S.b[sq];if(!p)continue;const e=glyphEl(p),q=vpos(sq);e.style.left=q.x+'%';e.style.top=q.y+'%';pcs.appendChild(e);pieceAt[sq]=e}}
+const sqEl=sq=>document.querySelector('.sq[data-sq="'+sq+'"]');
+function clearMarks(){document.querySelectorAll('.sq').forEach(s=>{s.classList.remove('sel','prev','prevT');s.querySelectorAll('.dot,.ring').forEach(x=>x.remove())})}
+function markLast(){document.querySelectorAll('.sq.last,.sq.chk').forEach(s=>s.classList.remove('last','chk'));
+ if(lastMove){sqEl(lastMove.from).classList.add('last');sqEl(lastMove.to).classList.add('last')}
+ if(Chess.inCheck(S)){const k=S.b.indexOf(S.turn==='w'?'K':'k');sqEl(k).classList.add('chk')}}
+function bubble(sq,text,dark,ms){const q=vpos(sq),b=document.createElement('div');b.className='bub'+(dark?' dark':'');b.textContent=text;
+ b.style.left=(q.x+6.25)+'%';b.style.top=(q.y-9)+'%';$('pcs').appendChild(b);requestAnimationFrame(()=>b.classList.add('on'));
+ setTimeout(()=>{b.classList.remove('on');setTimeout(()=>b.remove(),300)},ms||1400)}
+function shatter(sq,dark){const q=vpos(sq),pcs=$('pcs'),cols=dark?['#5a616c','#2b2f36','#16181c','#8a929e']:['#fffaf0','#e6dcc6','#bfb294','#9c8f74'];
+ for(let i=0;i<30;i++){const s=document.createElement('div');s.className='shard';const w=6+Math.random()*14,h=6+Math.random()*16;
+  s.style.cssText=`left:${q.x+6.25}%;top:${q.y+5}%;width:${w}px;height:${h}px;background:${cols[i%4]};clip-path:polygon(${Math.random()*40}% 0,100% ${Math.random()*50}%,${60+Math.random()*40}% 100%,0 ${50+Math.random()*50}%)`;
+  pcs.appendChild(s);const a=Math.random()*Math.PI*2,d=40+Math.random()*90;
+  s.animate([{transform:'translate(-50%,-60px) rotate(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d*.6-90}px) rotate(${Math.random()*540-270}deg)`,opacity:1,offset:.45},
+   {transform:`translate(${Math.cos(a)*d*1.3}px,${Math.sin(a)*d*.6+10}px) rotate(${Math.random()*720-360}deg)`,opacity:0}],{duration:1000+Math.random()*400,easing:'cubic-bezier(.2,.6,.4,1)',fill:'forwards'}).onfinish=()=>s.remove()}
+ for(const [cls,dur,sc] of [['flash',420,2.2],['dust',900,2.6]]){const e=document.createElement('div');e.className=cls;e.style.left=q.x+'%';e.style.top=q.y+'%';pcs.appendChild(e);
+  e.animate([{transform:'scale(.5)',opacity:1},{transform:'scale('+sc+')',opacity:0}],{duration:dur,easing:'ease-out'}).onfinish=()=>e.remove()}
+ const t=$('tilt');t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake')}
+function cracks(el){const c=document.createElement('div');c.className='crk';
+ for(let i=0;i<5;i++){const k=document.createElement('i');k.style.height=(18+Math.random()*26)+'%';k.style.transform=`rotate(${i*72+Math.random()*30}deg)`;c.appendChild(k)}
+ el.querySelector('.up').appendChild(c)}
+function moveEl(el,sq,hop){const q=vpos(sq);if(hop){el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop');setTimeout(SND.fx.land,560)}else{SND.fx.move();setTimeout(SND.fx.land,560)}el.style.left=q.x+'%';el.style.top=q.y+'%'}
+
+async function animate(m,mover){
+ const el=pieceAt[m.from],d=S.turn==='w'?1:-1,vsq=m.flag==='ep'?m.to-8*d:m.to,victim=m.cap?pieceAt[vsq]:null;
+ const dur=speed<500?.6:1;
+ if(victim){moveEl(el,m.to,true);await wait(620*dur);el.classList.remove('hop');el.classList.add('strike');await wait(240*dur);
+  victim.classList.add('crack');cracks(victim);SND.fx.crack();await wait(240*dur);victim.classList.add('gone');shatter(vsq,Chess.colorOf(m.cap)==='b');SND.fx.shatter();
+  if(Math.random()<.6)setTimeout(()=>bubble(m.to,pickOne(PIECE.strike),Chess.colorOf(m.p)==='b',1200),350);
+  await wait(200);el.classList.remove('strike');setTimeout(()=>victim.remove(),300)}
+ else{moveEl(el,m.to,m.p.toLowerCase()==='n');await wait(640*dur);el.classList.remove('hop')}
+ delete pieceAt[m.from];if(victim)delete pieceAt[vsq];pieceAt[m.to]=el;
+ if(m.flag==='castle'){const rf={6:7,2:0,62:63,58:56}[m.to],rt={6:5,2:3,62:61,58:59}[m.to],re=pieceAt[rf];moveEl(re,rt,true);delete pieceAt[rf];pieceAt[rt]=re;
+  bubble(rt,pickOne(PIECE.castle),Chess.colorOf(m.p)==='b',1200);await wait(600*dur);re.classList.remove('hop')}
+ if(m.promo){const ne=glyphEl(m.p===m.p.toUpperCase()?m.promo.toUpperCase():m.promo),q=vpos(m.to);ne.style.left=q.x+'%';ne.style.top=q.y+'%';
+  el.replaceWith(ne);pieceAt[m.to]=ne;SND.fx.sparkle();bubble(m.to,pickOne(PIECE.promote),Chess.colorOf(m.p)==='b',1500)}
+}
+
+/* ---------- commands ---------- */
+function moveText(m){const P=KN[m.p.toLowerCase()],to=Chess.sqName(m.to);
+ if(m.flag==='castle')return pickOne(['왕이여, 성채 안으로 피신하라!','룩과 왕, 자리를 바꿔라!','성벽을 세워라! 캐슬링!']);
+ if(m.promo)return pickOne(['폰이여, '+to+'에서 '+iga(KN[m.promo])+' 되어라!','끝까지 달려라, 폰! '+KN[m.promo]+'의 자리로!']);
+ const chk=Chess.inCheck(m.ns);
+ if(m.cap){const V=KN[m.cap.toLowerCase()];return pickOne([P+', '+to+'의 '+eul(V)+' 쳐라!',P+', '+eul(V)+' 박살 내라!',to+'의 '+V+', 끝장내라 '+P+'!'])+(chk?' 체크!':'')}
+ if(chk)return pickOne([P+', '+ro(to)+'! 체크다!','왕을 몰아붙여라, '+P+'!']);
+ if(m.p.toLowerCase()==='p')return pickOne(['폰, '+ro(to)+' 전진!','폰을 '+to+'까지 밀어 올려라!']);
+ if(m.p.toLowerCase()==='k')return '왕, '+ro(to)+' 한 걸음!';
+ return pickOne([P+', '+ro(to)+' 가라!',P+', '+eul(to)+' 장악하라!',P+', '+to+'에 자리를 잡아라!'])}
+function tagOf(x,best){const m=x.m,me=S.turn,opp=me==='w'?'b':'w';
+ const toAtt=Chess.attacked(m.ns.b,m.to,opp),val=Chess.VAL[m.p.toLowerCase()];
+ if(m.cap&&toAtt&&val>Chess.VAL[m.cap.toLowerCase()]+50)return 'bold';
+ if(m.cap||m.promo||Chess.inCheck(m.ns))return 'attack';
+ if(m.flag!=='castle'&&toAtt&&val>=300)return 'bold';
+ if(m.p.toLowerCase()==='p'&&((me==='w'&&(m.to>>3)>=4)||(me==='b'&&(m.to>>3)<=3))&&best.v-x.v>40)return 'bold';
+ if(m.p.toLowerCase()==='q'&&best.v-x.v>60)return 'bold';
+ return 'stable'}
+const TAG={attack:['⚔ 공격','attack'],stable:['🛡 안정','stable'],bold:['✦ 대담','bold']};
+function buildCommands(){
+ const sc=Chess.scoreAll(S,2);cmdScores=sc;if(!sc.length)return [];
+ const best=sc[0];sc.forEach(x=>x.tag=tagOf(x,best));
+ const used=new Set(),picks=[];const take=x=>{used.add(x);picks.push(x)};
+ take(best);
+ for(const cat of ['attack','stable','bold']){if(picks.some(p=>p.tag===cat))continue;
+  let c=sc.filter(x=>!used.has(x)&&x.tag===cat);
+  if(cat==='bold'){const ok=c.filter(x=>x.v>=best.v-400);c=ok.length?[pickOne(ok)]:c}
+  if(c.length&&picks.length<3)take(c[0])}
+ for(const x of sc){if(picks.length>=3)break;if(!used.has(x))take(x)}
+ return picks.map(x=>({x,text:moveText(x.m)})).sort(()=>Math.random()-.5)}
+function showCommands(){const box=$('cmds');
+ if(mode==='watch'||auto){box.innerHTML='<div class="note">자동 진행 중… 말들이 스스로 싸웁니다.</div>';return}
+ box.innerHTML='<div class="note">말들이 명령을 기다립니다…</div>';
+ setTimeout(()=>{if(gameOver||S.turn!==userColor||auto)return;const cs=buildCommands();const ms=Chess.legal(S);
+  box.innerHTML='';for(const c of cs){const m=c.x.m,b=document.createElement('button');b.className='cmd';
+   b.innerHTML='<span class="gi">'+GLYPH[m.p.toLowerCase()]+'︎</span><span class="tx"><span class="tg '+TAG[c.x.tag][1]+'">'+TAG[c.x.tag][0]+'</span><b>'+c.text+'</b><small>'+Chess.san(S,m,ms)+'</small></span>';
+   b.onmouseenter=()=>{clearMarks();sqEl(m.from).classList.add('prev');sqEl(m.to).classList.add('prevT')};
+   b.onmouseleave=()=>clearMarks();
+   b.onclick=()=>{if(busy)return;clearMarks();playUser(m,c.text)};box.appendChild(b)}
+  const n=document.createElement('div');n.className='note';n.style.padding='6px 4px 0';n.textContent='또는 판에서 말을 직접 움직이세요';box.appendChild(n)},40)}
+
+/* ---------- clicks ---------- */
+function onSquare(sq){if(busy||gameOver||auto||mode==='watch'||S.turn!==userColor)return;
+ const p=S.b[sq];
+ if(selected>=0){const opts=legalNow.filter(m=>m.from===selected&&m.to===sq);
+  if(opts.length){clearMarks();selected=-1;if(opts.length>1){askPromo().then(pr=>{const m=opts.find(x=>x.promo===pr);playUser(m,moveText(m))});return}
+   playUser(opts[0],moveText(opts[0]));return}}
+ clearMarks();selected=-1;
+ if(p&&Chess.colorOf(p)===userColor){selected=sq;legalNow=Chess.legal(S);sqEl(sq).classList.add('sel');SND.fx.click();
+  for(const m of legalNow.filter(m=>m.from===sq)){const t=sqEl(m.to);if(!t.querySelector('.dot,.ring')){const d=document.createElement('div');d.className=m.cap?'ring':'dot';t.appendChild(d)}}}}
+function askPromo(){return new Promise(res=>{const o=$('promo');o.classList.remove('hide');
+ o.querySelectorAll('button').forEach(b=>b.onclick=()=>{o.classList.add('hide');res(b.dataset.p)})})}
+
+/* ---------- turns ---------- */
+function setTurnUI(){const top=$('plTop'),bot=$('plBot');top.classList.toggle('turn',S.turn===oppColor());bot.classList.toggle('turn',S.turn===userColor)}
+function capturedUI(){const cap=c=>capBy[c].map(p=>GLYPH[p.toLowerCase()]).join('');$('capBot').textContent=cap(userColor);$('capTop').textContent=cap(oppColor())}
+function oppPersp(){const w=Chess.qscore(S);return oppColor()==='w'?w:-w}
+function emotionFromEval(){const e=oppPersp();return e>250?'good':e<-250?'bad':'calm'}
+
+async function playUser(m,text){busy=true;
+ let quality='ok';
+ if(cmdScores){const best=cmdScores[0].v,me=cmdScores.find(x=>x.m.from===m.from&&x.m.to===m.to&&x.m.promo===m.promo);
+  if(me){const diff=best-me.v;if(diff>=250)quality='blunder';else if(diff<=10&&cmdScores.filter(x=>x.v<best-150).length>=Math.min(3,cmdScores.length-1)&&cmdScores.length>3)quality='good'}}
+ $('cmds').innerHTML='<div class="note">“'+text+'”</div>';
+ if(quality==='blunder'&&Math.random()<.8){bubble(m.from,pickOne(PIECE.grumble),userColor==='b',1500);await wait(1500)}
+ else{bubble(m.from,pickOne(PIECE.order),userColor==='b',1000);await wait(900)}
+ await doMove(m,'user',quality)}
+
+async function doMove(m,who,quality){
+ const ms=Chess.legal(S),sanTxt=Chess.san(S,m,ms),before=S;
+ await animate(m,who);
+ S=m.ns||Chess.apply(before,m);lastMove=m;moveCount++;
+ const k=Chess.key(S);reps[k]=(reps[k]||0)+1;
+ // log
+ const no=before.full,lg=$('log'),mv=m.cap?'<b class="x">'+sanTxt+'</b>':sanTxt;let row=lg.lastElementChild;
+ if(before.turn==='w'||!row||row.dataset.full!==String(no)){row=document.createElement('div');row.dataset.full=no;row.innerHTML='<em>'+no+'.</em><span>'+(before.turn==='b'?'… · ':'')+'</span>';lg.appendChild(row)}
+ const span=row.lastChild;span.innerHTML+=(before.turn==='b'&&!span.innerHTML.endsWith('· ')?' · ':'')+mv;lg.scrollTop=1e5;
+ sanLog.push(sanTxt);
+ if(m.cap){capBy[Chess.colorOf(m.p)].push(m.cap);capturedUI()}
+ // highlights
+ const actor=who==='user'?userName:C().name,target=who==='user'?C().name:userName;
+ if(m.cap&&'qr'.includes(m.cap.toLowerCase()))highlights.push(no+'수: '+actor+'의 '+iga(KN[m.p.toLowerCase()])+' '+target+'의 '+eul(KN[m.cap.toLowerCase()])+' 박살 냄');
+ if(m.promo)highlights.push(no+'수: '+actor+'의 폰이 '+KN[m.promo]+'(으)로 승급');
+ markLast();setTurnUI();
+ const chk=Chess.inCheck(S);if(chk){SND.fx.check();setTimeout(()=>bubble(m.to,pickOne(PIECE.check),Chess.colorOf(m.p)==='b',1200),200)}
+ // reactions (one opponent line per move)
+ const prevEmo=emotion,newEmo=emotionFromEval();
+ let line=null,vars={};
+ if(who==='user'){
+  if(m.cap){vars.piece=KN[m.cap.toLowerCase()];line=m.cap.toLowerCase()==='q'?'lost_queen':'lost'}
+  else if(chk)line='checked';
+  else if(quality==='blunder')line='blunder';else if(quality==='good')line='good_move'}
+ else{if(chk)line='check';else if(m.cap){vars.piece=KN[m.cap.toLowerCase()];line='capture'}}
+ if(newEmo!==prevEmo){setEmotion(newEmo);if(!line||Math.random()<.5)line=newEmo==='good'?'winning':newEmo==='bad'?'losing':line}
+ if(line&&(line!=='lost'||Math.random()<.7))setTimeout(()=>say(line,vars),250);
+ if(await checkEnd())return;
+ busy=false;nextTurn()}
+
+async function nextTurn(){if(gameOver)return;
+ if(S.turn===oppColor()||auto||mode==='watch'){$('cmds').innerHTML=S.turn===userColor?'<div class="note">자동 진행 중…</div>':'<div class="note">'+iga(C().name)+' 수를 고민합니다…</div>';
+  busy=true;await wait(speed);
+  if(S.turn===oppColor()&&C().flip&&oppPersp()<-350&&moveCount>6){return flipBoard()}
+  if(S.turn===oppColor()&&Math.random()<.18)say('thinking');
+  await wait(60);
+  const isOpp=S.turn===oppColor(),cfg=isOpp?DIFF[diffKey()]:DIFF.mid;
+  const res=Chess.think(S,cfg.depth,cfg.ms);let m=res[0].m;
+  if(cfg.blunder&&Math.random()<cfg.blunder&&res.length>1)m=pickOne(res.slice(0,Math.min(6,res.length))).m;
+  if(!isOpp)bubble(m.from,pickOne(PIECE.order),userColor==='b',900);
+  await doMove(m,isOpp?'opp':'user','ok');return}
+ legalNow=Chess.legal(S);busy=false;showCommands()}
+
+async function checkEnd(){const ms=Chess.legal(S);let result=null,reason='';
+ if(!ms.length){if(Chess.inCheck(S)){result=S.turn===userColor?'lose':'win';reason='checkmate'}else{result='draw';reason='stalemate'}}
+ else if(S.half>=100){result='draw';reason='fifty-move rule'}
+ else if(reps[Chess.key(S)]>=3){result='draw';reason='threefold repetition'}
+ else if(Chess.insufficient(S)){result='draw';reason='insufficient material'}
+ if(!result)return false;
+ // Voldemort never accepts a checkmate: he destroys the board instead
+ if(result==='win'&&C().flip){await flipBoard(true);return true}
+ await finish(result,reason);return true}
+
+// Voldemort: Avada Kedavra - a green beam from Voldemort smashes every piece and the board itself
+async function flipBoard(mated){gameOver=true;busy=true;
+ if(mated){await wait(400);setEmotion('lose');say('lose');$('cmds').innerHTML='<div class="note">체크메이트…?</div>';await wait(2600)}
+ $('cmds').innerHTML='<div class="note">'+iga(C().name)+' 지팡이를 뽑았습니다…</div>';say('flip');setEmotion('lose');await wait(1100);
+ const wide=getComputedStyle($('opp')).display!=='none',src=(wide?$('opp'):$('plTop')).getBoundingClientRect(),
+  bd=$('board').getBoundingClientRect(),x1=wide?src.right-20:src.left+30,y1=wide?src.top+src.height*.3:src.top+src.height/2,
+  x2=bd.left+bd.width/2,y2=bd.top+bd.height/2,len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+ SND.fx.avada();const beam=document.createElement('div');beam.className='beam';beam.style.left=x1+'px';beam.style.top=(y1-7)+'px';beam.style.width=len+'px';beam.style.transform='rotate('+ang+'deg) scaleX(0)';document.body.appendChild(beam);
+ await beam.animate([{transform:'rotate('+ang+'deg) scaleX(0)'},{transform:'rotate('+ang+'deg) scaleX(1)'}],{duration:260,easing:'ease-in',fill:'forwards'}).finished;
+ const fx=document.createElement('div');fx.className='greenfx';document.body.appendChild(fx);
+ fx.animate([{opacity:0},{opacity:1,offset:.15},{opacity:0}],{duration:900,fill:'forwards'}).onfinish=()=>fx.remove();
+ beam.animate([{opacity:1},{opacity:0}],{duration:700,delay:200,fill:'forwards'}).onfinish=()=>beam.remove();
+ const t=$('tilt');t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake');
+ // every piece shatters, from the centre outwards
+ const list=Object.entries(pieceAt).map(([sq,e])=>({sq:+sq,e,d:Math.abs((sq&7)-3.5)+Math.abs((sq>>3)-3.5)})).sort((a,b)=>a.d-b.d);
+ for(const it of list){setTimeout(()=>{it.e.classList.add('gone');shatter(it.sq,S.b[it.sq]&&Chess.colorOf(S.b[it.sq])==='b');
+  it.e.querySelector('.g').style.filter='drop-shadow(0 0 8px #3f6)'},40+it.d*70)}
+ await wait(900);
+ // the board breaks into slabs that fall away
+ const fr=document.querySelector('.frame'),box=fr.getBoundingClientRect(),host=$('tilt');
+ const cuts=[[0,0,52,0,44,47,0,55],[52,0,100,0,100,40,44,47],[0,55,44,47,38,100,0,100],[44,47,100,40,100,100,38,100]];
+ const slabs=cuts.map(c=>{const cl=fr.cloneNode(true);cl.classList.add('slab');cl.style.left='0';cl.style.top='0';cl.style.width=box.width/1+'px';cl.style.width='100%';
+  cl.style.clipPath='polygon('+c[0]+'% '+c[1]+'%,'+c[2]+'% '+c[3]+'%,'+c[4]+'% '+c[5]+'%,'+c[6]+'% '+c[7]+'%)';cl.querySelectorAll('.pc,.shard,.dust,.flash,.bub').forEach(x=>x.remove());host.appendChild(cl);return cl});
+ host.style.position='relative';fr.style.visibility='hidden';
+ slabs.forEach((cl,i)=>{const dx=(i%2?1:-1)*(40+Math.random()*60),dy=140+Math.random()*120,rot=(i%2?1:-1)*(10+Math.random()*25);
+  cl.animate([{transform:'translate(0,0) rotate(0)',filter:'brightness(1.6) hue-rotate(60deg)'},{transform:'translate('+dx*.3+'px,'+(-20)+'px) rotate('+rot*.2+'deg)',offset:.2},
+   {transform:'translate('+dx+'px,'+dy+'px) rotate('+rot+'deg)',opacity:0}],{duration:1500+i*120,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'})});
+ for(let k=0;k<4;k++)setTimeout(()=>shatter(Math.floor(Math.random()*64),true),k*120);
+ highlights.push(S.full+'수: '+(mated?'체크메이트를 당하자 ':'형세가 기울자 ')+iga(C().name)+' 아바다 케다브라로 체스판과 말을 모조리 박살 냄');
+ await wait(1900);await finish('flip','board destroyed')}
+
+async function finish(result,reason){gameOver=true;busy=true;setTimeout(()=>result==='win'?SND.fx.win():result==='lose'?SND.fx.lose():null,result==='flip'?1500:400);
+ if(result!=='flip'){setEmotion(result==='win'?'lose':result==='lose'?'win':'calm');
+  setTimeout(()=>say(result==='win'?'lose':result==='lose'?'win':'draw'),300)}
+ if(reason==='checkmate')highlights.push(S.full+'수: '+(result==='win'?userName:C().name)+'의 체크메이트');
+ await wait(2200);
+ const RT={win:'승리',lose:'패배',draw:'무승부',flip:'판 파괴'},RE={'checkmate':'체크메이트','stalemate':'스테일메이트','fifty-move rule':'50수 규칙','threefold repetition':'3회 반복','insufficient material':'기물 부족','board destroyed':iga(C().name)+' 아바다 케다브라로 판을 부쉈습니다','resign':'기권'};
+ $('rT').textContent=RT[result];$('rS').textContent=(RE[reason]||reason)+' · '+S.full+'수'+(mode==='watch'?' · 관전':'');
+ const code=['[CHESS RESULT]','opponent='+lineId()+' ('+C().name+', '+DIFF[diffKey()].label+')','color='+(userColor==='w'?'white':'black'),
+  'result='+result,'reason='+reason,'moves='+S.full,'mode='+(mode==='watch'?'watch':autoUsed?'auto':'play'),
+  'highlights='+(highlights.slice(-4).join(' | ')||'없음'),'[/CHESS RESULT]'].join('\n');
+ $('rCode').value=code;lastResult={type:'hp-chess-result',text:code,result,reason,opponent:lineId(),moves:S.full};
+ $('rRowEmbed').style.display=EMBED?'flex':'none';$('rRowSolo').style.display=EMBED?'none':'flex';
+ $('rCopied').textContent=EMBED?'결과 전달이 안 되면, 결과 복사 후 채팅에 직접 붙여 넣어 주세요.':'';
+ $('result').classList.remove('hide')}
+
+/* ---------- setup / start ---------- */
+function fillSetup(){const sel=$('sOpp');sel.innerHTML=Object.entries(CHARS).map(([k,c])=>'<option value="'+k+'">'+c.name+'</option>').join('')}
+function applyNames(){const c=C();$('oppName').textContent=c.name;$('oppDiff').textContent='난이도 · '+DIFF[diffKey()].label;$('oppIni').textContent=c.name[0];
+ $('nmTop').textContent=c.name;$('sbTop').textContent=(oppColor()==='w'?'백':'흑')+' · '+DIFF[diffKey()].label;
+ $('nmBot').textContent=userName;$('sbBot').textContent=(userColor==='w'?'백':'흑')+(mode==='watch'?' · 자동':' · 명령을 내리시오');
+ $('avBot').textContent=userColor==='w'?'♔':'♚';$('avTop').textContent=oppColor()==='w'?'♔':'♚'}
+function startGame(){S=Chess.load(Chess.START);pieceAt={};reps={};sanLog=[];highlights=[];capBy={w:[],b:[]};gameOver=false;busy=false;lastMove=null;moveCount=0;selected=-1;autoUsed=auto;
+ $('log').innerHTML='';document.querySelectorAll('.slab').forEach(x=>x.remove());document.querySelector('.frame').style.visibility='';buildBoard();placePieces();capturedUI();applyNames();markLast();setTurnUI();
+ emotion='';setEmotion('calm',true);setTimeout(()=>say('start'),500);setTimeout(nextTurn,1300)}
+function coinToss(){const t=$('toss'),c=$('coin'),m=$('tmsg'),pk=$('tpick');t.classList.remove('hide');pk.classList.remove('on');m.textContent='갈레온 금화를 던집니다…';
+ const force=Q.get('coin'),heads=force?force==='heads':Math.random()<.5;
+ c.classList.remove('flip');void c.offsetWidth;c.style.setProperty('--end',heads?'1800deg':'1980deg');c.classList.add('flip');SND.fx.coin();setTimeout(SND.fx.coinLand,2150);
+ const go=col=>{userColor=col;t.classList.add('hide');startGame()};
+ setTimeout(()=>{if(heads){m.innerHTML='앞면! <small>흑과 백, 원하는 쪽을 고르시오</small>';pk.classList.add('on');pk.querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.c))}
+  else{const oc=Math.random()<.6?'w':'b';m.innerHTML='뒷면… <small>'+iga(C().name)+' '+(oc==='w'?'백':'흑')+'을 골랐습니다. 당신은 '+(oc==='w'?'흑':'백')+'입니다</small>';setTimeout(()=>go(oc==='w'?'b':'w'),2000)}},2300)}
+function begin(watch){oppId=$('sOpp').value;year=+$('sYear').value;ts=$('sTs').checked;userName=$('sName').value.trim()||'당신';mode=watch?'watch':'play';
+ $('setup').classList.add('hide');if(watch){userColor='w';startGame()}else coinToss()}
+
+fillSetup();
+$('sGo').onclick=()=>begin(false);$('sWatch').onclick=()=>begin(true);
+// manual copy: works everywhere; the text box is also selectable by hand
+async function copyResult(){const t=$('rCode');let ok=false;try{await navigator.clipboard.writeText(t.value);ok=true}catch(e){}
+ if(!ok){t.focus();t.select();try{ok=document.execCommand('copy')}catch(e){}}
+ $('rCopied').textContent=ok?'복사했어요. 채팅창에 붙여 넣어 보내 주세요.':'자동 복사가 막혀 있어요. 위 글을 길게 눌러 전체 선택 후 복사해 주세요.'}
+$('rCopy').onclick=copyResult;$('rCopy2').onclick=copyResult;
+// embedded (RisuAI plugin window): hand the result to the host
+$('rSend').onclick=()=>{try{window.parent.postMessage(lastResult,'*');$('rCopied').textContent='결과를 전달했어요. 창을 닫고 메시지를 보내면 AI가 대국을 묘사합니다.';$('rSend').disabled=true}
+ catch(e){$('rCopied').textContent='전달에 실패했어요. 결과 복사를 이용해 주세요.'}};
+$('rAgain').onclick=()=>{$('result').classList.add('hide');$('rCopied').textContent='';$('rSend').disabled=false;if(mode==='watch')startGame();else coinToss()};
+// standalone only: pick another opponent
+function otherOpp(){gameOver=true;busy=true;$('result').classList.add('hide');$('rCopied').textContent='';$('setup').classList.remove('hide')}
+$('rOther').onclick=otherOpp;$('bOther').onclick=()=>{if(gameOver||confirmQuit())otherOpp()};
+function confirmQuit(){const b=$('bOther');if(b.dataset.arm){delete b.dataset.arm;b.textContent='다른 상대';return true}b.dataset.arm=1;b.textContent='한 번 더 누르면 대국 종료';setTimeout(()=>{delete b.dataset.arm;b.textContent='다른 상대'},2500);return false}
+// sound toggles; audio starts on the first tap (browser rule)
+const sndUI=()=>{const n=SND.pref.bgm;$('bgmN').textContent=n?String(n):'OFF';$('bBgm').classList.toggle('off',!n);
+ $('sfxN').textContent=SND.pref.sfx?'ON':'OFF';$('bSfx').classList.toggle('off',!SND.pref.sfx)};sndUI();
+function sndTip(t){const e=$('sndTip');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1600)}
+$('bBgm').onclick=e=>{e.stopPropagation();SND.init();const n=SND.justStarted()?SND.pref.bgm:SND.cycleBgm();sndUI();sndTip(n?'♪ '+n+'. '+SND.trackName(n):'브금 꺼짐')};
+$('bSfx').onclick=e=>{e.stopPropagation();SND.init();SND.setSfx(!SND.pref.sfx);sndUI();sndTip(SND.pref.sfx?'효과음 켜짐':'효과음 꺼짐')};
+document.addEventListener('pointerdown',()=>SND.init(),{once:true});
+if(EMBED)document.body.classList.add('embed');
+$('bAuto').onclick=()=>{auto=!auto;$('bAuto').classList.toggle('on',auto);if(auto)autoUsed=true;if(!busy&&!gameOver&&S)nextTurn();else if(!auto&&S&&S.turn===userColor&&!gameOver)showCommands()};
+$('speed').querySelectorAll('button').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;$('speed').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))});
+$('bResign').onclick=()=>{if(gameOver||!S||mode==='watch')return;highlights.push(S.full+'수: '+iga(userName)+' 기권');finish('lose','resign')};
+// launched from RisuAI with parameters: ?opp=ron&year=3&ts=0&user=이름
+if(Q.get('opp')&&CHARS[Q.get('opp')]){$('sOpp').value=Q.get('opp');$('sYear').value=Q.get('year')||'3';$('sTs').checked=Q.get('ts')==='1';$('sName').value=Q.get('user')||'';begin(Q.get('mode')==='watch')}
+window.Chess=Chess;
+</script></body></html>
