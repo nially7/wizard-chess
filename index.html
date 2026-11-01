@@ -40,6 +40,7 @@ button{font:inherit}
 .emo.bad{color:#9fc4ff;border-color:#4f6c99;background:rgba(79,108,153,.15)}
 .emo.win{color:#1a1208;background:linear-gradient(var(--gold2),var(--gold));border-color:var(--gold2)}
 .emo.lose{color:#c9c0ad;border-color:#555;background:rgba(0,0,0,.4)}
+.emo.crucio_1,.emo.crucio_2,.emo.crucio_3{color:#ffc2da;border-color:#c23b72;background:rgba(194,59,114,.2)}
 .obub{position:absolute;z-index:61;top:12%;left:calc(100% - 14px);width:max-content;max-width:280px;padding:10px 14px;
  font-size:14px;font-weight:600;line-height:1.45;color:#2a1d0c;border-radius:12px;
  background:linear-gradient(#fbf3df,#ead9b2);border:1px solid #b8913f;box-shadow:0 8px 20px rgba(0,0,0,.5);
@@ -217,6 +218,15 @@ button{font:inherit}
  background:linear-gradient(180deg,#fff4c8,#f0c75a 50%,#a9741c);-webkit-background-clip:text;background-clip:text;color:transparent;
  filter:drop-shadow(0 0 6px rgba(240,199,90,.45))}
 .champ i{font-style:normal;font-size:.95em}
+.crubeam{position:fixed;z-index:90;height:10px;transform-origin:0 50%;pointer-events:none;border-radius:5px;
+ background:linear-gradient(90deg,rgba(255,80,160,0),#ff4fa3 12%,#fff0f7 50%,#ff4fa3 88%,rgba(255,80,160,.2));
+ box-shadow:0 0 16px 5px rgba(255,60,150,.85),0 0 50px 16px rgba(220,30,90,.5)}
+.crufx{position:fixed;inset:0;z-index:89;pointer-events:none;background:radial-gradient(circle at 50% 85%,rgba(255,60,90,.75),rgba(150,0,40,.55) 50%,rgba(40,0,10,.6))}
+.crutxt{position:fixed;left:50%;top:42%;z-index:91;pointer-events:none;transform:translate(-50%,-50%);font:900 clamp(34px,7vw,84px)/1 'Cinzel',serif;
+ letter-spacing:.12em;color:#ffd6e6;text-shadow:0 0 12px #ff2d7a,0 0 40px #b0003a,0 4px 0 #3a0010;white-space:nowrap}
+.pl.cru{animation:cru .09s linear infinite;box-shadow:0 0 0 2px #ff4f8b,0 0 30px rgba(255,40,100,.8)!important}
+@keyframes cru{0%{transform:translate(0)}25%{transform:translate(-4px,2px) rotate(-.6deg)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px) rotate(.6deg)}100%{transform:translate(0)}}
+.app.cru-shake{animation:cru .08s linear 8}
 </style></head><body>
 
 <!-- setup -->
@@ -433,7 +443,8 @@ const CHARS={
  dumbledore:{name:'알버스 덤블도어',ts:true,diff:()=>'max'},
  riddle:{name:'톰 리들',tsName:'토미 리들',ts:true,diff:()=>'strong'},
  grindelwald:{name:'겔러트 그린델왈드',tsName:'겔다 그린델왈드',ts:true,diff:()=>'max'},
- voldemort:{name:'볼드모트',ts:true,diff:()=>'weak',flip:true}};
+ voldemort:{name:'볼드모트',ts:true,diff:()=>'weak',flip:true},
+ umbridge:{name:'돌로레스 엄브릿지',diff:()=>'mid',crucio:3}};
 // opponent lines: LINES[id] (id = ron, snape_m, snape_ts ...). Empty situations fall back to GENERIC.
 const GENERIC={
  start:['좋아, 한 판 해볼까.','먼저 둬도 괜찮아.','잘 부탁해, {user}.'],
@@ -512,7 +523,7 @@ const PL={
 const pline=(p,sit)=>{const set=PL[p.toLowerCase()];const a=(set&&set[sit])||PIECE[sit]||[];return a.length?pickOne(a):''};
 const KN={p:'폰',n:'기사',b:'비숍',r:'룩',q:'여왕',k:'왕'};
 const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-const EMO_KO={calm:'평온',good:'유리',bad:'불리',win:'승리',lose:'패배'};
+const EMO_KO={calm:'평온',good:'유리',bad:'불리',win:'승리',lose:'패배',crucio_1:'크루시오',crucio_2:'크루시오',crucio_3:'크루시오'};
 
 /* Korean particles */
 // 0 = no final consonant, 1 = final consonant, 2 = final ㄹ (digits are read as Sino-Korean numbers)
@@ -557,6 +568,9 @@ const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0
   coin(){if(!ok())return;const t=T();for(let i=0;i<10;i++)tone(2600+i*90,'sine',t+i*.11,.08,.06);noise(t,1.2,.12,'bandpass',3000,3)},
   coinLand(){if(!ok())return;const t=T();tone(2093,'sine',t,1.2,.2);tone(3136,'sine',t,.9,.1);tone(4186,'sine',t,.6,.06);noise(t,.05,.3,'highpass',4000,1)},
   sparkle(){if(!ok())return;const t=T();[1047,1319,1568,2093,2637].forEach((f,i)=>tone(f,'sine',t+i*.07,.5,.12))},
+  crucio(){if(!ok())return;const t=T();noise(t,.35,.35,'bandpass',2200,3,600);
+   for(let i=0;i<14;i++)noise(t+.3+i*.09,.06,.35,'highpass',3000+Math.random()*3000,1.5);
+   tone(330,'sawtooth',t+.3,1.4,.14,null,.01,180);tone(347,'sawtooth',t+.3,1.4,.1,null,.01,170)},
   avada(){if(!ok())return;const t=T();noise(t,.5,.5,'bandpass',300,2,4000);tone(1200,'sawtooth',t+.35,.5,.18,null,.005,90);
    noise(t+.45,1.2,.8,'lowpass',2000,.7,120);tone(55,'sine',t+.45,1.2,.8)},
   win(){if(!ok())return;const t=T();[523,659,784,1047].forEach((f,i)=>{tone(f,'triangle',t+i*.13,.7,.18);tone(f*2,'sine',t+i*.13,.5,.05)})},
@@ -621,7 +635,7 @@ const SND=(()=>{let ctx=null,master,sfxG,bgmG,noiseBuf,timer=null,step=0,nextT=0
   const P2=P1.map(([n,l])=>[n+7,l]);
   let st=t;ph(P1);pz(st,4,47);st=t;ph(P1);pz(st,4,47);st=t;ph(P2);pz(st,4,54);st=t;ph(P2);pz(st,4,54);
   return {ev,len:t,bpm:96,accel:true}}
- const TRACKS={1:{name:'여름 · 비발디',make:seqVivaldi},2:{name:'카프리스 24번 · 파가니니',make:seqPaganini},3:{name:'산왕의 전당 · 그리그',make:seqGrieg}};
+ const TRACKS={1:{name:'겨울 · 비발디',make:seqVivaldi},2:{name:'카프리스 24번 · 파가니니',make:seqPaganini},3:{name:'산왕의 전당 · 그리그',make:seqGrieg}};
  function voice(v,f,t,d,g){
   if(v==='lead'){const o1=ctx.createOscillator(),o2=ctx.createOscillator(),lfo=ctx.createOscillator(),lg=ctx.createGain(),e=ctx.createGain();
    o1.type='sawtooth';o2.type='sawtooth';o1.frequency.value=f;o2.frequency.value=f*1.004;lfo.frequency.value=5.6;lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(f*.006,t+Math.min(.25,d));
@@ -657,6 +671,7 @@ const Q=new URLSearchParams(location.search);
 const $=id=>document.getElementById(id);
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let S,userColor='w',oppId='ron',year=3,ts=false,userName='당신',mode='play',auto=false,speed=800;
+let crucioN=0,crucioBad=false;
 let pieceAt={},busy=false,selected=-1,legalNow=[],cmdScores=null,reps={},sanLog=[],highlights=[],capBy={w:[],b:[]};
 let lastResult=null;const EMBED=Q.get('embed')==='1'||window.parent!==window;
 let emotion='calm',gameOver=false,autoUsed=false,lastMove=null,moveCount=0;
@@ -668,8 +683,9 @@ const flipped=()=>userColor==='b';
 
 function lineSet(){const segs=LINES[lineId()]||LINES[oppId];if(!segs)return {};const hit=segs.find(x=>year>=x.lo&&year<=x.hi)||segs.filter(x=>x.lo<=year).pop()||segs[0];return hit.s}
 function say(sit,vars){const set=lineSet();let arr=(set[sit]&&set[sit].length?set[sit]:GENERIC[sit])||[];if(!arr.length)return;
- let t=pickOne(arr).replace(/\{user\}/g,userName).replace(/\{piece\}/g,(vars&&vars.piece)||'말');
- const ob=$('obub'),mb=$('mbub');for(const b of [ob,mb]){b.textContent=t;b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),2600)}}
+ sayText(pickOne(arr),vars)}
+function sayText(raw,vars,ms){const t=raw.replace(/\{user\}/g,userName).replace(/\{piece\}/g,(vars&&vars.piece)||'말');
+ const ob=$('obub'),mb=$('mbub');for(const b of [ob,mb]){b.textContent=t;b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),ms||2600)}}
 
 /* ---------- portrait ---------- */
 /* ---------- portrait files ----------
@@ -703,7 +719,7 @@ async function setEmotion(e,force){if(e===emotion&&!force)return;emotion=e;
  const o=$('opp');o.classList.remove('emo-change');void o.offsetWidth;o.classList.add('emo-change');
  const pre=await resolvePortrait(),img=$('oppImg');if(emotion!==e)return;
  if(!pre){img.style.opacity=0;$('oppPh').style.display='flex';return}
- const calm=await IMG(imgUrl(pre,'calm')),src=(await IMG(imgUrl(pre,e)))||calm;if(emotion!==e||!src)return;
+ const calm=await IMG(imgUrl(pre,'calm')),alt=e.startsWith('crucio')?await IMG(imgUrl(pre,'bad')):null,src=(await IMG(imgUrl(pre,e)))||alt||calm;if(emotion!==e||!src)return;
  img.onload=()=>{img.style.opacity=1;$('oppPh').style.display='none'};img.src=src;
  $('avTop').innerHTML='';if(calm){const a=document.createElement('img');a.src=calm;$('avTop').appendChild(a)}}
 
@@ -914,6 +930,10 @@ async function nextTurn(){if(gameOver)return;
  if(S.turn===oppColor()||auto||mode==='watch'){$('cmds').innerHTML=S.turn===userColor?'<div class="note">자동 진행 중…</div>':'<div class="note">'+iga(C().name)+' 수를 고민합니다…</div>';
   busy=true;await wait(speed);
   if(S.turn===oppColor()&&C().flip&&oppPersp()<-350&&moveCount>6){return flipBoard()}
+  // Umbridge: every time she slips into a losing position she curses {user} (at most 3 times)
+  if(S.turn===oppColor()&&C().crucio){const e=oppPersp();
+   if(e>-40)crucioBad=false;
+   else if(e<-110&&!crucioBad&&crucioN<C().crucio&&moveCount>2){crucioBad=true;await castCrucio()}}
   if(S.turn===oppColor()&&Math.random()<.18)say('thinking');
   await wait(60);
   const isOpp=S.turn===oppColor(),cfg=isOpp?DIFF[diffKey()]:DIFF.mid;
@@ -932,6 +952,27 @@ async function checkEnd(){const ms=Chess.legal(S);let result=null,reason='';
  // Voldemort never accepts a checkmate: he destroys the board instead
  if(result==='win'&&C().flip){await flipBoard(true);return true}
  await finish(result,reason);return true}
+
+const CRUCIO_LINES=['에헴, 에헴. 규칙을 모르는 학생에겐 교육이 필요하겠죠? 크루시오!','이건 다 당신을 위한 거예요, 귀여운 학생. 크루시오!','마법부는 반항을 용납하지 않아요. 크루시오!'];
+// Umbridge: the Cruciatus Curse hits {user}, not the board
+async function castCrucio(){crucioN++;
+ const set=lineSet(),own=set.crucio&&set.crucio.length?set.crucio:CRUCIO_LINES,line=own[Math.min(crucioN-1,own.length-1)];
+ setEmotion('crucio_'+crucioN);$('cmds').innerHTML='<div class="note">'+iga(C().name)+' 지팡이를 '+userName+'에게 겨눕니다…</div>';
+ sayText(line,null,3600);await wait(1300);
+ const wide=getComputedStyle($('opp')).display!=='none',src=(wide?$('opp'):$('plTop')).getBoundingClientRect(),dst=$('plBot').getBoundingClientRect(),
+  x1=wide?src.right-20:src.left+30,y1=wide?src.top+src.height*.3:src.top+src.height/2,x2=dst.left+dst.width*.3,y2=dst.top+dst.height/2,
+  len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+ SND.fx.crucio();const beam=document.createElement('div');beam.className='crubeam';beam.style.left=x1+'px';beam.style.top=(y1-5)+'px';beam.style.width=len+'px';beam.style.transform='rotate('+ang+'deg) scaleX(0)';document.body.appendChild(beam);
+ await beam.animate([{transform:'rotate('+ang+'deg) scaleX(0)'},{transform:'rotate('+ang+'deg) scaleX(1)'}],{duration:220,easing:'ease-in',fill:'forwards'}).finished;
+ const fx=document.createElement('div');fx.className='crufx';document.body.appendChild(fx);
+ fx.animate([{opacity:0},{opacity:1,offset:.1},{opacity:.4,offset:.3},{opacity:.9,offset:.45},{opacity:.3,offset:.7},{opacity:0}],{duration:1500,fill:'forwards'}).onfinish=()=>fx.remove();
+ const tx=document.createElement('div');tx.className='crutxt';tx.textContent='CRUCIO';document.body.appendChild(tx);
+ tx.animate([{opacity:0,transform:'translate(-50%,-50%) scale(1.6)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)',offset:.2},{opacity:1,offset:.75},{opacity:0,transform:'translate(-50%,-50%) scale(.96)'}],{duration:1600,fill:'forwards'}).onfinish=()=>tx.remove();
+ beam.animate([{opacity:1},{opacity:.6,offset:.5},{opacity:1,offset:.6},{opacity:0}],{duration:1300,fill:'forwards'}).onfinish=()=>beam.remove();
+ const pl=$('plBot'),wr=document.querySelector('.app')||document.body;pl.classList.add('cru');wr.classList.remove('cru-shake');void wr.offsetWidth;wr.classList.add('cru-shake');
+ await wait(1500);pl.classList.remove('cru');setEmotion('bad');
+ highlights.push(S.full+'수: '+iga(C().name)+' '+userName+'에게 크루시오 ('+crucioN+'/'+C().crucio+')');
+ $('cmds').innerHTML='<div class="note">'+iga(C().name)+' 수를 고민합니다…</div>';await wait(500)}
 
 // Voldemort: Avada Kedavra - a green beam from Voldemort smashes every piece and the board itself
 async function flipBoard(mated){gameOver=true;busy=true;
@@ -973,7 +1014,7 @@ async function finish(result,reason){gameOver=true;busy=true;setTimeout(()=>resu
  $('rT').textContent=RT[result];$('rS').textContent=(RE[reason]||reason)+' · '+S.full+'수'+(mode==='watch'?' · 관전':'');
  const code=['[CHESS RESULT]','opponent='+lineId()+' ('+C().name+', '+DIFF[diffKey()].label+')','color='+(userColor==='w'?'white':'black'),
   'result='+result,'reason='+reason,'moves='+S.full,'mode='+(mode==='watch'?'watch':autoUsed?'auto':'play'),
-  'highlights='+(highlights.slice(-4).join(' | ')||'없음'),'[/CHESS RESULT]'].join('\n');
+  'highlights='+(highlights.slice(-4).join(' | ')||'없음'),...(C().crucio?['crucio='+crucioN+' (the Cruciatus Curse was cast on '+userName+' '+crucioN+' time(s) during the game)']:[]),'[/CHESS RESULT]'].join('\n');
  $('rCode').value=code;lastResult={type:'hp-chess-result',text:code,result,reason,opponent:lineId(),moves:S.full};
  $('rRowEmbed').style.display=EMBED?'flex':'none';$('rRowSolo').style.display=EMBED?'none':'flex';
  $('rCopied').textContent='';$('rSend').disabled=false;$('rCode').style.display=EMBED?'none':'';
@@ -986,7 +1027,7 @@ function applyNames(){const c=C();$('oppName').textContent=c.name;$('oppDiff').i
  $('nmTop').textContent=c.name;$('sbTop').innerHTML=(oppColor()==='w'?'백':'흑')+' · '+diffHTML(diffKey());
  $('nmBot').textContent=userName;$('sbBot').textContent=(userColor==='w'?'백':'흑')+(mode==='watch'?' · 자동':' · 명령을 내리시오');
  $('avBot').textContent=userColor==='w'?'♔':'♚';$('avTop').textContent=oppColor()==='w'?'♔':'♚'}
-async function startGame(){await loadPieceImages();S=Chess.load(Chess.START);pieceAt={};reps={};sanLog=[];highlights=[];capBy={w:[],b:[]};gameOver=false;busy=false;lastMove=null;moveCount=0;selected=-1;autoUsed=auto;
+async function startGame(){await loadPieceImages();S=Chess.load(Chess.START);pieceAt={};reps={};sanLog=[];highlights=[];capBy={w:[],b:[]};crucioN=0;crucioBad=false;gameOver=false;busy=false;lastMove=null;moveCount=0;selected=-1;autoUsed=auto;
  $('log').innerHTML='';document.querySelectorAll('.slab').forEach(x=>x.remove());document.querySelector('.frame').style.visibility='';buildBoard();placePieces();capturedUI();applyNames();markLast();setTurnUI();
  emotion='';setEmotion('calm',true);setTimeout(()=>say('start'),500);setTimeout(nextTurn,1300)}
 function coinToss(){const t=$('toss'),c=$('coin'),m=$('tmsg'),pk=$('tpick');t.classList.remove('hide');pk.classList.remove('on');m.textContent='갈레온 금화를 던집니다…';
